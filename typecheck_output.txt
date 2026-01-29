@@ -1,0 +1,36 @@
+﻿
+> translatron@1.0.0 typecheck
+> tsc --noEmit
+
+src/compiler/index.ts(184,15): error TS6133: 'startTime' is declared but its value is never read.
+src/compiler/index.ts(189,45): error TS2339: Property 'getFailedItems' does not exist on type 'TranslatronLedger'.
+src/compiler/index.ts(205,37): error TS7006: Parameter 'item' implicitly has an 'any' type.
+src/compiler/index.ts(219,33): error TS7006: Parameter 'item' implicitly has an 'any' type.
+src/compiler/index.ts(266,48): error TS2339: Property 'results' does not exist on type 'TranslationResult[]'.
+src/compiler/index.ts(267,58): error TS2339: Property 'results' does not exist on type 'TranslationResult[]'.
+src/compiler/index.ts(269,31): error TS6133: 'failedItem' is declared but its value is never read.
+src/compiler/index.ts(299,45): error TS2339: Property 'tokens' does not exist on type 'TranslationResult[]'.
+src/compiler/index.ts(300,46): error TS2339: Property 'tokens' does not exist on type 'TranslationResult[]'.
+node.exe : npm notice
+At line:1 char:1
++ & "C:\Program 
+Files\nodejs/node.exe" 
+"C:\Users\shant\npm-global/node_ 
+...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~
+    + CategoryInfo          : No 
+   tSpecified: (npm notice:Stri  
+  ng) [], RemoteException
+    + FullyQualifiedErrorId : Na 
+   tiveCommandError
+ 
+npm notice New minor version of 
+npm available! 11.6.4 -> 11.7.0
+npm notice Changelog: https://git
+hub.com/npm/cli/releases/tag/v11.
+7.0
+npm notice To update run: npm 
+install -g npm@11.7.0
+npm notice

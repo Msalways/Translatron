@@ -1,3 +1,0 @@
-﻿src/compiler/index.ts(34,16): error TS6133: 'options' is declared but its value is never read.
-src/compiler/index.ts(199,15): error TS6133: 'startTime' is declared but its value is never read.
-src/config/loader.ts(102,5): error TS2739: Type '{ dir: string; format: "json"; flat: false; indent: number; }' is missing the following properties from type '{ flat: boolean; dir: string; format: "json" | "typescript" | "yaml"; indent: number; fileNaming: string; allowSameFolder: boolean; }': fileNaming, allowSameFolder

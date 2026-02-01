@@ -56,6 +56,32 @@ export abstract class BaseLLMProvider implements LLMProvider {
     }
 
     /**
+     * Clean LLM output to extract just the JSON part
+     * Handles <think> tags, markdown, and extra text
+     */
+    protected cleanJsonOutput(text: string): string {
+        // Remove <think> tags (common in reasoning models)
+        let clean = text.replace(/<think>[\s\S]*?<\/think>/g, '').trim();
+
+        // Extract from markdown code blocks if present
+        const codeBlockMatch = clean.match(/```(?:json)?\s*(\[[\s\S]*?\])\s*```/);
+        if (codeBlockMatch) {
+            return codeBlockMatch[1];
+        }
+
+        // Find outer JSON array extraction
+        // This regex looks for the first '[' and the last ']'
+        const start = clean.indexOf('[');
+        const end = clean.lastIndexOf(']');
+
+        if (start !== -1 && end !== -1 && end > start) {
+            return clean.substring(start, end + 1);
+        }
+
+        return clean;
+    }
+
+    /**
      * Parse translation response into results
      */
     protected parseTranslationResponse(
@@ -63,8 +89,11 @@ export abstract class BaseLLMProvider implements LLMProvider {
         responseText: string
     ): TranslationResult[] {
         try {
+            // Clean the output first
+            const jsonString = this.cleanJsonOutput(responseText);
+
             // Try to parse as JSON array
-            const translations = JSON.parse(responseText);
+            const translations = JSON.parse(jsonString);
 
             if (!Array.isArray(translations)) {
                 throw new Error('Response is not an array');
@@ -76,8 +105,9 @@ export abstract class BaseLLMProvider implements LLMProvider {
                 confidence: 1.0,
             }));
         } catch (error) {
-            // Fallback: try to extract individual translations
+            // Fallback: try to extract individual translations if JSON parsing failed
             console.error('Failed to parse response as JSON array:', error);
+            console.debug('Raw response:', responseText);
             throw new Error('Invalid translation response format');
         }
     }

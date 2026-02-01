@@ -1,7 +1,0 @@
-{
-  "greeting": "Hello, {name}!",
-  "auth": {
-    "login": "Sign in",
-    "logout": "Sign out"
-  }
-}

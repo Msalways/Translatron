@@ -54,7 +54,7 @@ jobs:
             -m "chore(release): %s [skip ci]"
 
       - name: Push changes and tags
-        run: git push origin main --follow-tags
+        run: git push origin master --follow-tags
 
       - name: Publish to npm
         env:

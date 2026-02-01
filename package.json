@@ -1,6 +1,6 @@
 {
   "name": "translatron",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "Deterministic, incremental, build-time translation compiler using LLMs",
   "type": "module",
   "bin": {

@@ -1,18 +1,18 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import * as fc from 'fast-check';
-import { TranslatronLedger, SyncStatusType } from '../src/ledger/index';
+import { translatronxLedger, SyncStatusType } from '../src/ledger/index';
 import { rmSync, existsSync, mkdirSync } from 'fs';
 import { join } from 'path';
 
 describe('Ledger Property Tests', () => {
     const testDir = join(process.cwd(), 'temp-ledger-tests');
     const ledgerPath = join(testDir, 'test.sqlite');
-    let ledger: TranslatronLedger;
+    let ledger: translatronxLedger;
 
     beforeEach(() => {
         if (existsSync(testDir)) rmSync(testDir, { recursive: true, force: true });
         mkdirSync(testDir, { recursive: true });
-        ledger = new TranslatronLedger(ledgerPath);
+        ledger = new translatronxLedger(ledgerPath);
     });
 
     afterEach(() => {

@@ -93,8 +93,8 @@ export type OutputConfig = z.infer<typeof OutputConfigSchema>;
 export const AdvancedConfigSchema = z.object({
     batchSize: z.number().int().min(1).default(20),
     concurrency: z.number().int().min(1).max(10).default(3),
-    cacheDir: z.string().default('./.translatron'),
-    ledgerPath: z.string().default('./.translatron/ledger.sqlite'),
+    cacheDir: z.string().default('./.translatronx'),
+    ledgerPath: z.string().default('./.translatronx/ledger.sqlite'),
     verbose: z.boolean().default(false),
 }).optional();
 
@@ -111,9 +111,9 @@ export const TargetLanguageSchema = z.object({
 export type TargetLanguage = z.infer<typeof TargetLanguageSchema>;
 
 /**
- * Main Translatron configuration schema
+ * Main translatronx configuration schema
  */
-export const TranslatronConfigSchema = z.object({
+export const translatronxConfigSchema = z.object({
     sourceLanguage: z.string().min(2, 'Source language code is required'),
     targetLanguages: z.array(TargetLanguageSchema).min(1, 'At least one target language is required'),
     extractors: z.array(ExtractorConfigSchema).min(1, 'At least one extractor is required'),
@@ -124,20 +124,20 @@ export const TranslatronConfigSchema = z.object({
     advanced: AdvancedConfigSchema,
 });
 
-export type TranslatronConfig = z.infer<typeof TranslatronConfigSchema>;
+export type translatronxConfig = z.infer<typeof translatronxConfigSchema>;
 
 /**
  * Validate configuration and return typed result
  */
-export function validateConfig(config: unknown): TranslatronConfig {
-    return TranslatronConfigSchema.parse(config);
+export function validateConfig(config: unknown): translatronxConfig {
+    return translatronxConfigSchema.parse(config);
 }
 
 /**
  * Safe validate configuration without throwing
  */
-export function safeValidateConfig(config: unknown): { success: true; data: TranslatronConfig } | { success: false; error: z.ZodError } {
-    const result = TranslatronConfigSchema.safeParse(config);
+export function safeValidateConfig(config: unknown): { success: true; data: translatronxConfig } | { success: false; error: z.ZodError } {
+    const result = translatronxConfigSchema.safeParse(config);
     if (result.success) {
         return { success: true, data: result.data };
     }

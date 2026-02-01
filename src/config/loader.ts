@@ -1,20 +1,20 @@
 import { cosmiconfig } from 'cosmiconfig';
-import { type TranslatronConfig } from './schema';
+import { type translatronxConfig } from './schema';
 import { validateConfig } from './schema';
 import chalk from 'chalk';
 import { pathToFileURL } from 'url';
 
-const MODULE_NAME = 'translatron';
+const MODULE_NAME = 'translatronx';
 
 /**
- * Load and validate Translatron configuration
+ * Load and validate translatronx configuration
  */
-export async function loadConfig(searchFrom?: string): Promise<TranslatronConfig> {
+export async function loadConfig(searchFrom?: string): Promise<translatronxConfig> {
   const explorer = cosmiconfig(MODULE_NAME, {
     searchPlaces: [
-      'translatron.config.ts',
-      'translatron.config.js',
-      'translatron.config.json',
+      'translatronx.config.ts',
+      'translatronx.config.js',
+      'translatronx.config.json',
       `.${MODULE_NAME}rc`,
       `.${MODULE_NAME}rc.json`,
       `.${MODULE_NAME}rc.ts`,
@@ -39,7 +39,7 @@ export async function loadConfig(searchFrom?: string): Promise<TranslatronConfig
 
     if (!result || !result.config) {
       throw new Error(
-        `No ${MODULE_NAME} configuration found. Run 'translatron init' to create one.`
+        `No ${MODULE_NAME} configuration found. Run 'translatronx init' to create one.`
       );
     }
 
@@ -59,7 +59,7 @@ export async function loadConfig(searchFrom?: string): Promise<TranslatronConfig
       throw new Error('Invalid configuration');
     }
   } catch (error: any) {
-    if (error.message.includes('No translatron configuration found')) {
+    if (error.message.includes('No translatronx configuration found')) {
       throw error;
     }
     console.error(chalk.red('❌ Failed to load configuration:'));
@@ -71,7 +71,7 @@ export async function loadConfig(searchFrom?: string): Promise<TranslatronConfig
 /**
  * Get default configuration template
  */
-export function getDefaultConfig(): Partial<TranslatronConfig> {
+export function getDefaultConfig(): Partial<translatronxConfig> {
   return {
     sourceLanguage: 'en',
     targetLanguages: [
@@ -125,8 +125,8 @@ export function getDefaultConfig(): Partial<TranslatronConfig> {
     advanced: {
       batchSize: 20,
       concurrency: 3,
-      cacheDir: './.translatron',
-      ledgerPath: './.translatron/ledger.sqlite',
+      cacheDir: './.translatronx',
+      ledgerPath: './.translatronx/ledger.sqlite',
       verbose: false,
     },
   };
@@ -135,6 +135,6 @@ export function getDefaultConfig(): Partial<TranslatronConfig> {
 /**
  * Configuration helper for better IDE support
  */
-export function defineConfig(config: TranslatronConfig): TranslatronConfig {
+export function defineConfig(config: translatronxConfig): translatronxConfig {
   return config;
 }

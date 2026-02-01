@@ -1,3 +1,3 @@
-// Translatron - Main entry point
+// translatronx - Main entry point
 export * from './config/index';
 export * from './compiler/index';

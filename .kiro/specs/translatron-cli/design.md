@@ -1,8 +1,8 @@
-# Design Document: Translatron CLI
+# Design Document: translatronx CLI
 
 ## Overview
 
-Translatron is a deterministic, incremental, build-time translation compiler that leverages Large Language Models (LLMs) to translate application strings. The system treats localization as a pure compile step, providing zero runtime overhead while maintaining cost efficiency through incremental processing and developer override protection.
+translatronx is a deterministic, incremental, build-time translation compiler that leverages Large Language Models (LLMs) to translate application strings. The system treats localization as a pure compile step, providing zero runtime overhead while maintaining cost efficiency through incremental processing and developer override protection.
 
 The architecture follows a pipeline pattern with clear separation of concerns: extraction → normalization → change detection → translation planning → LLM processing → validation → atomic file operations. Each stage is designed for reliability, performance, and maintainability.
 
@@ -207,7 +207,7 @@ Each stage can trigger retries with modified parameters or escalate to fallback 
 
 ### Configuration Model
 ```typescript
-interface TranslatronConfig {
+interface translatronxConfig {
   sourceLanguage: string
   targetLanguages: string[]
   extractors: ExtractorConfig[]
@@ -255,7 +255,7 @@ Before writing correctness properties, I need to analyze the acceptance criteria
 
 <function_calls>
 <invoke name="prework">
-<parameter name="featureName">translatron-cli
+<parameter name="featureName">translatronx-cli
 
 After reviewing all the acceptance criteria, I need to perform property reflection to eliminate redundancy and combine related properties:
 
@@ -400,7 +400,7 @@ The testing strategy employs both unit tests and property-based tests to ensure 
 **Test Tagging Format**:
 Each property test must include a comment with the format:
 ```typescript
-// Feature: translatron-cli, Property 1: Source Extraction and Hash Consistency
+// Feature: translatronx-cli, Property 1: Source Extraction and Hash Consistency
 ```
 
 ### Testing Priorities

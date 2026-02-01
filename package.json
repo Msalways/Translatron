@@ -1,10 +1,10 @@
 {
-  "name": "translatron",
+  "name": "translatronx",
   "version": "0.1.0",
   "description": "Deterministic, incremental, build-time translation compiler using LLMs",
   "type": "module",
   "bin": {
-    "translatron": "./dist/cli.js"
+    "translatronx": "./dist/cli.js"
   },
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",

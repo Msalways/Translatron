@@ -1,5 +1,5 @@
 /**
- * Core type definitions for Translatron
+ * Core type definitions for translatronx
  */
 
 /**

@@ -1,5 +1,5 @@
-import { type TranslatronConfig } from '../config/schema';
-import { TranslatronLedger } from '../ledger/index';
+import { type translatronxConfig } from '../config/schema';
+import { translatronxLedger } from '../ledger/index';
 import { JsonExtractor } from '../extractors/json-extractor';
 import { IncrementalTranslationPlanner } from '../planner/index';
 import { ProviderFactory } from '../providers/index';
@@ -15,14 +15,14 @@ import chalk from 'chalk';
  * Main orchestrator for translation compilation
  */
 export class TranslationCompiler {
-    private ledger: TranslatronLedger;
+    private ledger: translatronxLedger;
     private planner: IncrementalTranslationPlanner;
     private writer: AtomicFileWriter;
     private promptManager: PromptManager;
 
-    constructor(private config: TranslatronConfig) {
-        const ledgerPath = config.advanced?.ledgerPath || './.translatron/ledger.sqlite';
-        this.ledger = new TranslatronLedger(ledgerPath);
+    constructor(private config: translatronxConfig) {
+        const ledgerPath = config.advanced?.ledgerPath || './.translatronx/ledger.sqlite';
+        this.ledger = new translatronxLedger(ledgerPath);
         this.planner = new IncrementalTranslationPlanner(this.ledger);
         this.writer = new AtomicFileWriter();
         this.promptManager = new PromptManager(this.config.prompts);

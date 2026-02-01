@@ -1,8 +1,8 @@
-# Implementation Plan: Translatron CLI
+# Implementation Plan: translatronx CLI
 
 ## Overview
 
-This implementation plan builds the Translatron CLI from scratch as a TypeScript/Node.js application. The system follows a pipeline architecture with clear separation of concerns: extraction → normalization → change detection → translation planning → LLM processing → validation → atomic file operations.
+This implementation plan builds the translatronx CLI from scratch as a TypeScript/Node.js application. The system follows a pipeline architecture with clear separation of concerns: extraction → normalization → change detection → translation planning → LLM processing → validation → atomic file operations.
 
 ## Tasks
 
@@ -19,12 +19,12 @@ This implementation plan builds the Translatron CLI from scratch as a TypeScript
 
 - [ ] 2. Configuration System
   - [ ] 2.1 Implement Zod configuration schema
-    - Define TranslatronConfig interface with all provider types
+    - Define translatronxConfig interface with all provider types
     - Create validation schemas for extractors, providers, validation rules
     - _Requirements: 7.1, 7.2, 7.3_
 
   - [ ] 2.2 Create configuration loader and validator
-    - Implement config file discovery (translatron.config.ts)
+    - Implement config file discovery (translatronx.config.ts)
     - Add configuration validation with detailed error reporting
     - _Requirements: 7.1, 7.2, 7.3_
 

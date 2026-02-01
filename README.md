@@ -1,11 +1,11 @@
-# Translatron
+# translatronx
 
 **Deterministic, incremental, build-time translation compiler using LLMs**
 
-[![npm version](https://img.shields.io/npm/v/translatron.svg)](https://www.npmjs.com/package/translatron)
+[![npm version](https://img.shields.io/npm/v/translatronx.svg)](https://www.npmjs.com/package/translatronx)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-> Translatron is not another translation management system. It is a **translation compiler** — it treats language like code: build once → ship everywhere → zero runtime cost.
+> translatronx is not another translation management system. It is a **translation compiler** — it treats language like code: build once → ship everywhere → zero runtime cost.
 
 ## 🌟 Features
 
@@ -41,17 +41,17 @@
 ### Install as Dev Dependency
 
 ```bash
-npm install --save-dev translatron
+npm install --save-dev translatronx
 # or
-yarn add --dev translatron
+yarn add --dev translatronx
 # or
-pnpm add -D translatron
+pnpm add -D translatronx
 ```
 
 ### Install Globally (Optional)
 
 ```bash
-npm install -g translatron
+npm install -g translatronx
 ```
 
 ## 🚀 Quick Start
@@ -59,13 +59,13 @@ npm install -g translatron
 ### 1. Initialize Configuration
 
 ```bash
-npx translatron init
+npx translatronx init
 ```
 
-This creates a `translatron.config.ts` file in your project root:
+This creates a `translatronx.config.ts` file in your project root:
 
 ```typescript
-import { defineConfig } from 'translatron';
+import { defineConfig } from 'translatronx';
 
 export default defineConfig({
   sourceLanguage: 'en',
@@ -128,7 +128,7 @@ Create `./locales/en.json`:
 ### 4. Run Translation Sync
 
 ```bash
-npx translatron sync
+npx translatronx sync
 ```
 
 **Output:**
@@ -154,7 +154,7 @@ This generates:
 ### 5. Check Status
 
 ```bash
-npx translatron status
+npx translatronx status
 ```
 
 ## ⚙️ Configuration
@@ -162,7 +162,7 @@ npx translatron status
 ### Complete Configuration Reference
 
 ```typescript
-import { defineConfig } from 'translatron';
+import { defineConfig } from 'translatronx';
 
 export default defineConfig({
   // Source language code (ISO 639-1)
@@ -243,8 +243,8 @@ export default defineConfig({
   advanced: {
     batchSize: 20,                   // Strings per LLM call
     concurrency: 3,                  // Parallel LLM requests
-    cacheDir: './.translatron',      // State directory
-    ledgerPath: './.translatron/ledger.sqlite',
+    cacheDir: './.translatronx',      // State directory
+    ledgerPath: './.translatronx/ledger.sqlite',
     verbose: false                   // Enable verbose logging
   }
 });
@@ -359,24 +359,24 @@ Examples:
 
 ## 🎮 CLI Commands
 
-### `translatron init`
+### `translatronx init`
 
-Initialize Translatron configuration.
+Initialize translatronx configuration.
 
 ```bash
-translatron init
+translatronx init
 ```
 
-Creates `translatron.config.ts` with default settings.
+Creates `translatronx.config.ts` with default settings.
 
 ---
 
-### `translatron sync`
+### `translatronx sync`
 
 Synchronize translations (incremental processing).
 
 ```bash
-translatron sync [options]
+translatronx sync [options]
 ```
 
 **Options:**
@@ -387,13 +387,13 @@ translatron sync [options]
 
 ```bash
 # Normal incremental sync
-translatron sync
+translatronx sync
 
 # Force regenerate all translations (ignores manual edits)
-translatron sync --force
+translatronx sync --force
 
 # Verbose mode with detailed logging
-translatron sync --verbose
+translatronx sync --verbose
 ```
 
 **What happens during sync:**
@@ -409,12 +409,12 @@ translatron sync --verbose
 
 ---
 
-### `translatron status`
+### `translatronx status`
 
 Display coverage statistics and system state.
 
 ```bash
-translatron status
+translatronx status
 ```
 
 **Output:**
@@ -445,12 +445,12 @@ Latest Run:
 
 ---
 
-### `translatron retry`
+### `translatronx retry`
 
 Retry failed translation batches.
 
 ```bash
-translatron retry [options]
+translatronx retry [options]
 ```
 
 **Options:**
@@ -462,26 +462,26 @@ translatron retry [options]
 
 ```bash
 # Retry all failed translations
-translatron retry
+translatronx retry
 
 # Retry only French translations
-translatron retry --lang fr
+translatronx retry --lang fr
 
 # Retry multiple languages
-translatron retry --lang fr,de,es
+translatronx retry --lang fr,de,es
 
 # Dry run to see what would be retried
-translatron retry --dry-run
+translatronx retry --dry-run
 ```
 
 ---
 
-### `translatron check`
+### `translatronx check`
 
 Validate target files without making changes.
 
 ```bash
-translatron check
+translatronx check
 ```
 
 **Note:** This command validates:
@@ -496,7 +496,7 @@ translatron check
 
 ### Manual Override Protection
 
-Translatron detects when you manually edit translations and protects them from being overwritten.
+translatronx detects when you manually edit translations and protects them from being overwritten.
 
 **Workflow:**
 
@@ -517,13 +517,13 @@ Translatron detects when you manually edit translations and protects them from b
    ```
 
 3. **Next sync:**
-   - Translatron detects hash mismatch
+   - translatronx detects hash mismatch
    - Marks as `MANUAL` status in ledger
    - **Skips** this key in future syncs
 
 4. **Force regeneration (if needed):**
    ```bash
-   translatron sync --force
+   translatronx sync --force
    ```
 
 ### Provider Fallback Chain
@@ -595,7 +595,7 @@ prompts: {
 
 ### Same-Folder Source and Target
 
-By default, Translatron prevents source and target files in the same directory to avoid confusion. Enable if needed:
+By default, translatronx prevents source and target files in the same directory to avoid confusion. Enable if needed:
 
 ```typescript
 output: {
@@ -644,7 +644,7 @@ jobs:
       - name: Sync translations
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-        run: npx translatron sync
+        run: npx translatronx sync
       
       - name: Commit translations
         run: |
@@ -663,7 +663,7 @@ translate:
   image: node:18
   script:
     - npm ci
-    - npx translatron sync
+    - npx translatronx sync
   artifacts:
     paths:
       - locales/
@@ -674,10 +674,10 @@ translate:
 
 ### Programmatic API Usage
 
-Use Translatron programmatically in Node.js:
+Use translatronx programmatically in Node.js:
 
 ```typescript
-import { TranslationCompiler, loadConfig } from 'translatron';
+import { TranslationCompiler, loadConfig } from 'translatronx';
 
 async function translateApp() {
   // Load configuration
@@ -705,7 +705,7 @@ translateApp().catch(console.error);
 
 **Problem:** Different placeholder formats in your app.
 
-**Solution:** Translatron automatically detects and preserves:
+**Solution:** translatronx automatically detects and preserves:
 - `{variable}` - Single braces
 - `{{variable}}` - Double braces
 - `$variable` - Dollar sign
@@ -727,7 +727,7 @@ All placeholders are preserved exactly in translations.
 
 **Problem:** Deep nesting in translation files.
 
-**Solution:** Translatron flattens keys internally using dot notation:
+**Solution:** translatronx flattens keys internally using dot notation:
 
 ```json
 {
@@ -809,12 +809,12 @@ Output maintains original structure.
 #### Error: "Configuration file not found"
 
 ```bash
-Error: Could not find translatron.config.ts
+Error: Could not find translatronx.config.ts
 ```
 
 **Solution:**
 ```bash
-translatron init
+translatronx init
 ```
 
 #### Error: "API key not set"
@@ -850,17 +850,17 @@ Error: Source file not found: ./locales/en.json
 ### 1. Version Control
 
 **Do commit:**
-- ✅ `translatron.config.ts`
+- ✅ `translatronx.config.ts`
 - ✅ All translation files (`*.json`, `*.yaml`)
-- ✅ `.gitignore` entry for `.translatron/`
+- ✅ `.gitignore` entry for `.translatronx/`
 
 **Don't commit:**
-- ❌ `.translatron/` directory (state files)
+- ❌ `.translatronx/` directory (state files)
 - ❌ API keys (use environment variables)
 
 **Recommended `.gitignore`:**
 ```gitignore
-.translatron/
+.translatronx/
 *.sqlite
 *.sqlite-journal
 ```
@@ -924,7 +924,7 @@ targetLanguages: [
 **Cost estimation:**
 ```bash
 # Dry run to estimate cost
-translatron sync --dry-run
+translatronx sync --dry-run
 ```
 
 ### 5. Quality Assurance
@@ -941,7 +941,7 @@ validation: {
 ```
 
 **Manual review workflow:**
-1. Run `translatron sync`
+1. Run `translatronx sync`
 2. Review generated files
 3. Manually edit if needed
 4. Commit changes
@@ -971,28 +971,28 @@ prompts: {
 
 **Enable verbose mode:**
 ```bash
-translatron sync --verbose
+translatronx sync --verbose
 ```
 
 **Check status regularly:**
 ```bash
-translatron status
+translatronx status
 ```
 
 **Review run history:**
 ```bash
 # Ledger stores run history
-sqlite3 .translatron/ledger.sqlite "SELECT * FROM run_history ORDER BY started_at DESC LIMIT 5;"
+sqlite3 .translatronx/ledger.sqlite "SELECT * FROM run_history ORDER BY started_at DESC LIMIT 5;"
 ```
 
 ## 📚 API Reference
 
-### `defineConfig(config: TranslatronConfig)`
+### `defineConfig(config: translatronxConfig)`
 
-Define and validate Translatron configuration.
+Define and validate translatronx configuration.
 
 ```typescript
-import { defineConfig } from 'translatron';
+import { defineConfig } from 'translatronx';
 
 export default defineConfig({
   // ... configuration
@@ -1004,7 +1004,7 @@ export default defineConfig({
 Load configuration from file.
 
 ```typescript
-import { loadConfig } from 'translatron';
+import { loadConfig } from 'translatronx';
 
 const config = await loadConfig('./custom.config.ts');
 ```
@@ -1014,7 +1014,7 @@ const config = await loadConfig('./custom.config.ts');
 Main orchestrator for translation compilation.
 
 ```typescript
-import { TranslationCompiler } from 'translatron';
+import { TranslationCompiler } from 'translatronx';
 
 const compiler = new TranslationCompiler(config);
 ```
@@ -1084,8 +1084,8 @@ Contributions are welcome! Please read our [Contributing Guide](CONTRIBUTING.md)
 
 ```bash
 # Clone repository
-git clone https://github.com/yourusername/translatron.git
-cd translatron
+git clone https://github.com/yourusername/translatronx.git
+cd translatronx
 
 # Install dependencies
 npm install
@@ -1112,9 +1112,9 @@ MIT © [Your Name]
 
 ## 📞 Support
 
-- **Issues:** [GitHub Issues](https://github.com/yourusername/translatron/issues)
-- **Discussions:** [GitHub Discussions](https://github.com/yourusername/translatron/discussions)
-- **Email:** support@translatron.dev
+- **Issues:** [GitHub Issues](https://github.com/yourusername/translatronx/issues)
+- **Discussions:** [GitHub Discussions](https://github.com/yourusername/translatronx/discussions)
+- **Email:** support@translatronx.dev
 
 ---
 

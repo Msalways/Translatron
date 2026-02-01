@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { TranslationCompiler } from '../src/compiler/index';
-import { TranslatronConfig } from '../src/config/schema';
+import { translatronxConfig } from '../src/config/schema';
 import { writeFileSync, mkdirSync, rmSync, existsSync, readFileSync } from 'fs';
 import { join } from 'path';
 
@@ -13,7 +13,7 @@ describe('TranslationCompiler Integration', () => {
     // Pattern needs to be forward slashes for fast-glob even on Windows
     const pattern = sourceFile.replace(/\\/g, '/');
 
-    const mockConfig: TranslatronConfig = {
+    const mockConfig: translatronxConfig = {
         sourceLanguage: 'en',
         targetLanguages: [{ language: 'French', shortCode: 'fr' }],
         extractors: [

@@ -1,4 +1,4 @@
-import { defineConfig } from 'translatron';
+import { defineConfig } from 'translatronx';
 
 export default defineConfig({
   "sourceLanguage": "en",
@@ -45,8 +45,8 @@ export default defineConfig({
   "advanced": {
     "batchSize": 20,
     "concurrency": 3,
-    "cacheDir": "./.translatron",
-    "ledgerPath": "./.translatron/ledger.sqlite",
+    "cacheDir": "./.translatronx",
+    "ledgerPath": "./.translatronx/ledger.sqlite",
     "verbose": false
   }
 });

@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import * as fc from 'fast-check';
 import { IncrementalTranslationPlanner, ManualOverrideDetector } from '../src/planner/index';
-import { TranslatronLedger } from '../src/ledger/index';
+import { translatronxLedger } from '../src/ledger/index';
 import { SourceUnit } from '../src/types/index';
 import { rmSync, existsSync, mkdirSync } from 'fs';
 import { join } from 'path';
@@ -29,7 +29,7 @@ describe('Planner Property Tests', () => {
             fc.asyncProperty(fc.uniqueArray(fc.record({ key: keyArb, text: textArb }), { selector: v => v.key, minLength: 1 }), async (units) => {
                 // Use a fresh ledger for each iteration to avoid collisions
                 const itLedgerPath = join(testDir, `test_${Math.random().toString(36).substr(2, 9)}.sqlite`);
-                const itLedger = new TranslatronLedger(itLedgerPath);
+                const itLedger = new translatronxLedger(itLedgerPath);
                 const planner = new IncrementalTranslationPlanner(itLedger);
 
                 try {
@@ -87,7 +87,7 @@ describe('Planner Property Tests', () => {
             fc.property(fc.string({ minLength: 1 }), fc.string({ minLength: 1 }), (key, hash) => {
                 // Use a fresh ledger for each iteration to avoid collisions
                 const itLedgerPath = join(testDir, `test_${Math.random().toString(36).substr(2, 9)}.sqlite`);
-                const itLedger = new TranslatronLedger(itLedgerPath);
+                const itLedger = new translatronxLedger(itLedgerPath);
                 const detector = new ManualOverrideDetector(itLedger);
 
                 try {

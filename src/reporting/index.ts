@@ -1,4 +1,4 @@
-import { TranslatronLedger } from '../ledger/index';
+import { translatronxLedger } from '../ledger/index';
 import { type TargetLanguage } from '../types/index';
 import chalk from 'chalk';
 
@@ -26,7 +26,7 @@ export interface StatsSummary {
  * Generates summaries and audit trails from the SQLite ledger
  */
 export class ReportingSystem {
-    constructor(private ledger: TranslatronLedger) { }
+    constructor(private ledger: translatronxLedger) { }
 
     /**
      * Get a summary of the latest run

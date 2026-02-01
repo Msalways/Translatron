@@ -1,12 +1,12 @@
 import { type SourceUnit, type TranslationPlan, type TranslationBatch, type TranslationPlanner, type TargetLanguage } from '../types/index';
-import { TranslatronLedger } from '../ledger/index';
+import { translatronxLedger } from '../ledger/index';
 import { computeHash } from '../utils/hash';
 
 /**
  * Translation planner that implements incremental processing
  */
 export class IncrementalTranslationPlanner implements TranslationPlanner {
-    constructor(private ledger: TranslatronLedger) { }
+    constructor(private ledger: translatronxLedger) { }
 
     /**
      * Create a translation plan based on change detection
@@ -115,7 +115,7 @@ export class IncrementalTranslationPlanner implements TranslationPlanner {
  * Manual override detector
  */
 export class ManualOverrideDetector {
-    constructor(private ledger: TranslatronLedger) { }
+    constructor(private ledger: translatronxLedger) { }
 
     /**
      * Detect if a translation has been manually overridden

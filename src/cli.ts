@@ -4,15 +4,14 @@ import chalk from 'chalk';
 import { loadConfig, getDefaultConfig } from './config/index';
 import { TranslationCompiler } from './compiler/index';
 import { ReportingSystem } from './reporting/index';
-import { TranslatronLedger } from './ledger/index';
+import { translatronxLedger } from './ledger/index';
 import { writeFileSync } from 'fs';
 
 const program = new Command();
 
 program
-    .name('translatron')
+    .name('translatronx')
     .description('Deterministic, incremental, build-time translation compiler using LLMs')
-    .version('1.0.0');
 
 program
     .command('sync')
@@ -50,26 +49,26 @@ program
 
 program
     .command('init')
-    .description('Initialize Translatron configuration')
+    .description('Initialize translatronx configuration')
     .action(async () => {
         try {
-            console.log(chalk.blue('🚀 Initializing Translatron...\n'));
+            console.log(chalk.blue('🚀 Initializing translatronx...\n'));
 
             // Create default configuration
             const config = getDefaultConfig();
-            const configContent = `import { defineConfig } from 'translatron';
+            const configContent = `import { defineConfig } from 'translatronx';
 
 export default defineConfig(${JSON.stringify(config, null, 2)});
 `;
 
             // Write configuration file
-            writeFileSync('translatron.config.ts', configContent, 'utf-8');
+            writeFileSync('translatronx.config.ts', configContent, 'utf-8');
 
-            console.log(chalk.green('✅ Created translatron.config.ts'));
+            console.log(chalk.green('✅ Created translatronx.config.ts'));
             console.log(chalk.gray('\nNext steps:'));
-            console.log(chalk.gray('  1. Edit translatron.config.ts to configure your project'));
+            console.log(chalk.gray('  1. Edit translatronx.config.ts to configure your project'));
             console.log(chalk.gray('  2. Set API key: export OPENAI_API_KEY=your-key'));
-            console.log(chalk.gray('  3. Run: translatron sync\n'));
+            console.log(chalk.gray('  3. Run: translatronx sync\n'));
 
             process.exit(0);
         } catch (error: any) {
@@ -86,8 +85,8 @@ program
             console.log(chalk.blue('📊 Checking status...\n'));
 
             const config = await loadConfig();
-            const ledgerPath = config.advanced?.ledgerPath || './.translatron/ledger.sqlite';
-            const ledger = new TranslatronLedger(ledgerPath);
+            const ledgerPath = config.advanced?.ledgerPath || './.translatronx/ledger.sqlite';
+            const ledger = new translatronxLedger(ledgerPath);
             const reporting = new ReportingSystem(ledger);
 
             const stats = await reporting.getProjectStats(config.targetLanguages);

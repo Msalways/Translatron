@@ -7,6 +7,6 @@ coverage
 .env.local
 *.sqlite
 *.sqlite-journal
-.translatron
+.translatronx
 prd.md
 API.md

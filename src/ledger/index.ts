@@ -5,7 +5,7 @@ import { dirname } from 'path';
 /**
  * SQLite ledger for tracking translation state and change detection
  */
-export class TranslatronLedger {
+export class translatronxLedger {
   private db: Database.Database;
 
   constructor(ledgerPath: string) {

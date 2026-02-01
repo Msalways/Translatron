@@ -2,7 +2,7 @@
 
 ## Introduction
 
-Translatron is a deterministic, incremental, build-time translation compiler that leverages LLMs to translate application strings while treating localization as a pure compile step. It acts as a development dependency that integrates seamlessly into CI/CD pipelines, providing extremely cost-efficient translations by only processing new or changed strings while respecting developer manual overrides forever.
+translatronx is a deterministic, incremental, build-time translation compiler that leverages LLMs to translate application strings while treating localization as a pure compile step. It acts as a development dependency that integrates seamlessly into CI/CD pipelines, providing extremely cost-efficient translations by only processing new or changed strings while respecting developer manual overrides forever.
 
 ## Glossary
 
@@ -96,7 +96,7 @@ Translatron is a deterministic, incremental, build-time translation compiler tha
 
 #### Acceptance Criteria
 
-1. WHEN initializing, THE Translation_Compiler SHALL load configuration from translatron.config.ts
+1. WHEN initializing, THE Translation_Compiler SHALL load configuration from translatronx.config.ts
 2. WHEN validating configuration, THE Translation_Compiler SHALL use Zod schema validation
 3. WHEN configuration is invalid, THE Translation_Compiler SHALL report specific validation errors
 4. WHEN configuration changes, THE Translation_Compiler SHALL detect changes and invalidate cached state appropriately

@@ -98,7 +98,7 @@ git push origin patch
 gh run watch
 
 # 5. Verify on npm (after ~1-2 minutes)
-npm view translatron version
+npm view translatronx version
 ```
 
 ---
@@ -117,7 +117,7 @@ npm view translatron version
 
 ### Check Current Version
 ```bash
-npm view translatron version
+npm view translatronx version
 ```
 
 ### Delete a Tag (If Needed)
@@ -150,7 +150,7 @@ git tag -l
 gh release list
 
 # View on npm
-npm view translatron versions
+npm view translatronx versions
 ```
 
 ---
@@ -172,7 +172,7 @@ git push origin patch
 
 ### "npm publish failed"
 - Verify `NPM_TOKEN` is set in repository secrets
-- Check if version already exists: `npm view translatron versions`
+- Check if version already exists: `npm view translatronx versions`
 - Ensure you have publish rights to the package
 
 ### "Tests failing"
@@ -224,13 +224,13 @@ git tag patch && git push origin patch
 
 4. **Check npm before releasing**
    ```bash
-   npm view translatron version
+   npm view translatronx version
    ```
 
 5. **Monitor releases**
    - Check GitHub Actions for build status
    - Verify package on npm after release
-   - Test installation: `npm install translatron@latest`
+   - Test installation: `npm install translatronx@latest`
 
 ---
 
@@ -253,11 +253,11 @@ git tag patch
 git push origin patch
 
 # 4. Wait ~2 minutes and verify
-npm view translatron version
+npm view translatronx version
 # ✅ Shows new version!
 
 # 5. Test the published package
-npm install translatron@latest
+npm install translatronx@latest
 # ✅ Works perfectly!
 ```
 
@@ -266,6 +266,6 @@ npm install translatron@latest
 ## 📞 Need Help?
 
 - **Workflow logs**: GitHub → Actions tab → Latest run
-- **npm package**: https://www.npmjs.com/package/translatron
+- **npm package**: https://www.npmjs.com/package/translatronx
 - **Releases**: GitHub → Releases section
 - **Issues**: Create an issue in the repository

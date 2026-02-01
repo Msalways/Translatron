@@ -5,7 +5,21 @@
 [![npm version](https://img.shields.io/npm/v/translatronx.svg)](https://www.npmjs.com/package/translatronx)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
+## Why translatronx?
+
+Most translation tools are either:
+- Runtime systems with performance and cost overhead
+- SaaS platforms that own your data and workflow
+- Non-deterministic LLM wrappers that retranslate everything
+
+translatronx treats translations like source code:
+- Compile once at build time
+- Only retranslate what changed
+- Preserve manual edits permanently
+- Ship static files with zero runtime cost
+
 > translatronx is not another translation management system. It is a **translation compiler** — it treats language like code: build once → ship everywhere → zero runtime cost.
+
 
 ## 🌟 Features
 
@@ -35,7 +49,7 @@
 
 ### Prerequisites
 
-- **Node.js** >= 18.0.0
+- **Node.js** >= 20.0.0
 - **npm**, **yarn**, or **pnpm**
 
 ### Install as Dev Dependency
@@ -610,7 +624,7 @@ output: {
 locales/
   ├── en.json (source)
   ├── fr.json (target)
-  ├── de.json (target)
+  ├── ta.json (target)
   └── es.json (target)
 ```
 
@@ -1084,7 +1098,7 @@ Contributions are welcome! Please read our [Contributing Guide](CONTRIBUTING.md)
 
 ```bash
 # Clone repository
-git clone https://github.com/yourusername/translatronx.git
+git clone https://github.com/msalways/translatronx.git
 cd translatronx
 
 # Install dependencies
@@ -1112,9 +1126,9 @@ MIT © [Your Name]
 
 ## 📞 Support
 
-- **Issues:** [GitHub Issues](https://github.com/yourusername/translatronx/issues)
-- **Discussions:** [GitHub Discussions](https://github.com/yourusername/translatronx/discussions)
-- **Email:** support@translatronx.dev
+- **Issues:** [GitHub Issues](https://github.com/msalways/translatronx/issues)
+- **Discussions:** [GitHub Discussions](https://github.com/msalways/translatronx/discussions)
+- **Email:** shanthubolt@gmail.com
 
 ---
 

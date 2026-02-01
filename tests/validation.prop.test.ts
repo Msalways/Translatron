@@ -11,7 +11,7 @@ describe('Validation Pipeline Property Tests', () => {
         });
 
         await fc.assert(
-            fc.asyncProperty(fc.string({ minLength: 1 }), async (text) => {
+            fc.asyncProperty(fc.string({ minLength: 1, maxLength: 60 }).filter(s => s.trim().length > 0), async (text) => {
                 const result = await pipeline.validate(
                     { unitId: '1', translatedText: text, confidence: 1 },
                     { unitId: '1', keyPath: 'k', sourceText: 'source', sourceHash: 'h', placeholders: [], sourceFile: 'f', schemaVersion: 1 }

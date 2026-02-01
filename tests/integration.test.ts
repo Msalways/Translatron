@@ -5,10 +5,13 @@ import { writeFileSync, mkdirSync, rmSync, existsSync, readFileSync } from 'fs';
 import { join } from 'path';
 
 describe('TranslationCompiler Integration', () => {
-    const testDir = join(process.cwd(), 'temp-test-project');
+    const testDir = join(process.cwd(), 'test-env-integration');
     const ledgerPath = join(testDir, 'ledger.sqlite');
     const sourceFile = join(testDir, 'en.json');
     const outputDir = join(testDir, 'locales');
+
+    // Pattern needs to be forward slashes for fast-glob even on Windows
+    const pattern = sourceFile.replace(/\\/g, '/');
 
     const mockConfig: TranslatronConfig = {
         sourceLanguage: 'en',
@@ -16,7 +19,8 @@ describe('TranslationCompiler Integration', () => {
         extractors: [
             {
                 type: 'json',
-                pattern: 'temp-test-project/en.json', // Use relative path
+                pattern: pattern,
+                exclude: []
             }
         ],
         providers: [
@@ -39,6 +43,8 @@ describe('TranslationCompiler Integration', () => {
             format: 'json',
             flat: false,
             indent: 2,
+            fileNaming: '{shortCode}.json',
+            allowSameFolder: false
         },
         advanced: {
             ledgerPath: ledgerPath,
@@ -67,7 +73,7 @@ describe('TranslationCompiler Integration', () => {
     afterEach(() => {
         if (existsSync(testDir)) {
             // Close ledger first if it was opened
-            // rmSync(testDir, { recursive: true, force: true });
+            rmSync(testDir, { recursive: true, force: true });
         }
     });
 
@@ -83,11 +89,13 @@ describe('TranslationCompiler Integration', () => {
         // I'll use vi.spyOn on ProviderFactory.createProvider
         const { ProviderFactory } = await import('../src/providers/index.js');
         const spy = vi.spyOn(ProviderFactory, 'createProvider').mockReturnValue({
-            translate: async () => mockResults.map((text, i) => ({
-                unitId: `id-${i}`,
-                translatedText: text,
-                confidence: 1.0,
-            })),
+            translate: async () => {
+                return mockResults.map((text, i) => ({
+                    unitId: `id-${i}`,
+                    translatedText: text,
+                    confidence: 1.0,
+                }));
+            },
             getModelFingerprint: () => 'mock-model',
             estimateCost: () => 0.01,
         } as any);

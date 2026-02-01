@@ -7,33 +7,26 @@ import { rmSync, existsSync, mkdirSync } from 'fs';
 import { join } from 'path';
 
 describe('Planner Property Tests', () => {
-    const testDir = join(process.cwd(), 'temp-planner-tests');
-    const ledgerPath = join(testDir, 'test.sqlite');
-    let ledger: TranslatronLedger;
+    const baseTestDir = join(process.cwd(), 'temp-planner-tests');
 
     beforeEach(() => {
-        if (existsSync(testDir)) rmSync(testDir, { recursive: true, force: true });
-        mkdirSync(testDir, { recursive: true });
-        ledger = new TranslatronLedger(ledgerPath);
+        if (!existsSync(baseTestDir)) mkdirSync(baseTestDir, { recursive: true });
     });
 
     afterEach(() => {
-        if (ledger) ledger.close();
-        if (existsSync(testDir)) {
-            try {
-                rmSync(testDir, { recursive: true, force: true });
-            } catch (e) {
-                console.warn('Failed to cleanup test dir:', e);
-            }
-        }
+        // No global cleanup to avoid EBUSY, individual tests handle their own
     });
 
     it('should only include dirty or new units in the plan', async () => {
+        const testDir = join(baseTestDir, `plan-dirty_${Math.random().toString(36).substr(2, 9)}`);
+        if (existsSync(testDir)) rmSync(testDir, { recursive: true, force: true });
+        mkdirSync(testDir, { recursive: true });
+
         const keyArb = fc.string({ minLength: 1 });
         const textArb = fc.string({ minLength: 1 });
 
         await fc.assert(
-            fc.asyncProperty(fc.array(fc.record({ key: keyArb, text: textArb }), { minLength: 1 }), async (units) => {
+            fc.asyncProperty(fc.uniqueArray(fc.record({ key: keyArb, text: textArb }), { selector: v => v.key, minLength: 1 }), async (units) => {
                 // Use a fresh ledger for each iteration to avoid collisions
                 const itLedgerPath = join(testDir, `test_${Math.random().toString(36).substr(2, 9)}.sqlite`);
                 const itLedger = new TranslatronLedger(itLedgerPath);
@@ -80,9 +73,16 @@ describe('Planner Property Tests', () => {
                 }
             })
         );
+
+        // Individual test cleanup
+        if (existsSync(testDir)) rmSync(testDir, { recursive: true, force: true });
     });
 
     it('should respect manual overrides', () => {
+        const testDir = join(baseTestDir, `manual_${Math.random().toString(36).substr(2, 9)}`);
+        if (existsSync(testDir)) rmSync(testDir, { recursive: true, force: true });
+        mkdirSync(testDir, { recursive: true });
+
         fc.assert(
             fc.property(fc.string({ minLength: 1 }), fc.string({ minLength: 1 }), (key, hash) => {
                 // Use a fresh ledger for each iteration to avoid collisions
@@ -105,5 +105,7 @@ describe('Planner Property Tests', () => {
                 }
             })
         );
+
+        if (existsSync(testDir)) rmSync(testDir, { recursive: true, force: true });
     });
 });

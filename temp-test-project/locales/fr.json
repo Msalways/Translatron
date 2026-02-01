@@ -1,7 +1,9 @@
 {
-  "greeting": "Bonjour, {name}!",
+  "greeting": "Bonjour {name}!",
   "auth": {
     "login": "Se connecter",
-    "logout": "Se déconnecter"
+    "logout": "Se déconnecter",
+    "forgotPassword": "Mot de passe oublié",
+    "signUp": "S'inscrire"
   }
 }

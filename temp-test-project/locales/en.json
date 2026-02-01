@@ -1,0 +1,9 @@
+{
+  "greeting": "Hello, {name}!",
+  "auth": {
+    "login": "Sign in",
+    "logout": "Sign out",
+    "forgotPassword": "Forgot Password",
+    "signUp": "Sign Up"
+  }
+}

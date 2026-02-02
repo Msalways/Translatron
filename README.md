@@ -1116,7 +1116,7 @@ npm run lint
 
 ## 📄 License
 
-MIT © [Your Name]
+MIT © Shanthosh
 
 ## 🙏 Acknowledgments
 

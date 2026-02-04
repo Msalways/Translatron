@@ -1,6 +1,6 @@
 {
   "name": "translatronx",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Deterministic, incremental, build-time translation compiler using LLMs",
   "type": "module",
   "bin": {

@@ -490,6 +490,84 @@ translatronx retry --dry-run
 
 ---
 
+### `translatronx import`
+
+Import existing translations into the ledger (for integrating with existing projects).
+
+```bash
+translatronx import [options]
+```
+
+**Options:**
+- `--source <path>` - Source language file path (overrides config)
+- `--targets <paths>` - Target language files (comma-separated)
+- `--lang-map <json>` - JSON mapping of file paths to language codes
+- `--dry-run` - Show what would be imported without making changes
+- `--force` - Overwrite existing ledger entries
+
+**Examples:**
+
+```bash
+# Import from existing translation files (auto-detect from config)
+translatronx import
+
+# Import specific target files
+translatronx import --targets "locales/fr.json,locales/de.json"
+
+# Import with explicit language mapping
+translatronx import --lang-map '{"locales/french.json":"fr","locales/german.json":"de"}'
+
+# Preview import without making changes
+translatronx import --dry-run
+```
+
+**Use Cases:**
+
+1. **Migrating to Translatronx:**
+   ```bash
+   # You have existing translations in locales/
+   translatronx import
+   translatronx sync  # Only translates new/missing keys
+   ```
+
+2. **Adding New Languages:**
+   ```bash
+   # You have 8 languages, want to add 2 more
+   # Update config with 10 target languages
+   translatronx sync  # Automatically translates only the 2 new languages
+   ```
+
+3. **Partial Translations:**
+   ```bash
+   # Import what you have, sync fills in the gaps
+   translatronx import --targets "locales/fr.json"  # 60% coverage
+   translatronx sync  # Translates the missing 40%
+   ```
+
+**Output:**
+```
+📊 Analyzing coverage...
+
+  fr:
+    Total keys: 127
+    Matched keys: 120
+    Missing keys: 7
+    Coverage: 94.5%
+
+✅ Import Statistics:
+
+  Total records: 120
+  Imported: 120
+  Skipped: 0
+  Errors: 0
+  Languages: fr
+  Duration: 245ms
+
+💡 Tip: Run "translatronx status" to verify the import
+```
+
+---
+
 ### `translatronx check`
 
 Validate target files without making changes.

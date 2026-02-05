@@ -31,7 +31,7 @@ export abstract class BaseLLMProvider implements LLMProvider {
     ): Promise<T> {
         try {
             return await fn();
-        } catch (error: any) {
+        } catch (error: unknown) {
             if (attempt >= this.maxRetries) {
                 throw error;
             }

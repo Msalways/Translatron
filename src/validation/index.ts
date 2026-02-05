@@ -6,7 +6,7 @@ import { extractPlaceholders } from '../utils/hash';
  */
 export class TranslationValidationPipeline implements ValidationPipeline {
     constructor(
-        private config: {
+        private readonly config: {
             preservePlaceholders?: boolean;
             maxLengthRatio?: number;
             preventSourceLeakage?: boolean;

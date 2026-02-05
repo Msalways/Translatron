@@ -2,6 +2,17 @@ import Database from 'better-sqlite3';
 import { existsSync, mkdirSync } from 'fs';
 import { dirname } from 'path';
 
+export interface RunRecord {
+  run_id: string;
+  started_at: string;
+  finished_at: string | null;
+  model_used: string;
+  tokens_in: number | null;
+  tokens_out: number | null;
+  cost_estimate_usd: number | null;
+  config_hash: string;
+}
+
 /**
  * SQLite ledger for tracking translation state and change detection
  */
@@ -185,11 +196,11 @@ export class translatronxLedger {
   /**
    * Get the most recent run record
    */
-  getLatestRun(): any | null {
+  getLatestRun(): RunRecord | null {
     const stmt = this.db.prepare(`
       SELECT * FROM run_history ORDER BY started_at DESC LIMIT 1
     `);
-    return stmt.get() || null;
+    return stmt.get() as RunRecord | null;
   }
 
   /**
@@ -228,7 +239,7 @@ export class translatronxLedger {
   /**
    * Get failed translation items for retry
    */
-  getFailedItems(langCode?: string, _batchId?: string): FailedItem[] {
+  getFailedItems(langCode?: string): FailedItem[] {
     let query = `
       SELECT ss.*, sh.value_hash 
       FROM sync_status ss 
@@ -246,6 +257,148 @@ export class translatronxLedger {
     return stmt.all(...params) as FailedItem[];
   }
 
+  /**
+   * Import a single existing translation into the ledger
+   * Marks it as CLEAN so it won't be re-translated
+   */
+  importExistingTranslation(
+    keyPath: string,
+    langCode: string,
+    sourceHash: string,
+    targetHash: string,
+    runId?: string
+  ): void {
+    // Update source hash if not already present
+    this.updateSourceHash(keyPath, sourceHash, undefined, runId);
+
+    // Mark translation as CLEAN in sync_status
+    this.updateSyncStatus(keyPath, langCode, targetHash, 'CLEAN');
+  }
+
+  /**
+   * Bulk import existing translations (uses transaction for efficiency)
+   * Returns statistics about the import operation
+   */
+  bulkImportTranslations(records: ImportRecord[], runId?: string): ImportStatistics {
+    const startTime = Date.now();
+    let imported = 0;
+    let skipped = 0;
+    let errors = 0;
+    const languages = new Set<string>();
+
+    this.transaction(() => {
+      for (const record of records) {
+        try {
+          // Skip if already exists and not forcing overwrite
+          const existing = this.getSyncStatus(record.keyPath, record.langCode);
+          if (existing && existing.status === 'CLEAN') {
+            skipped++;
+            continue;
+          }
+
+          this.importExistingTranslation(
+            record.keyPath,
+            record.langCode,
+            record.sourceHash,
+            record.targetHash,
+            runId
+          );
+
+          languages.add(record.langCode);
+          imported++;
+        } catch (error) {
+          errors++;
+          console.error(`Error importing ${record.keyPath} (${record.langCode}):`, error);
+        }
+      }
+    });
+
+    return {
+      totalRecords: records.length,
+      imported,
+      skipped,
+      errors,
+      languages: Array.from(languages),
+      duration: Date.now() - startTime,
+    };
+  }
+
+  /**
+   * Get languages that are missing translations for a given key
+   * Useful for detecting partial language coverage
+   */
+  getUntranslatedLanguages(keyPath: string, targetLanguages: string[]): string[] {
+    const stmt = this.db.prepare(`
+      SELECT lang_code FROM sync_status 
+      WHERE key_path = ? AND status IN ('CLEAN', 'MANUAL')
+    `);
+    const translated = stmt.all(keyPath) as { lang_code: string }[];
+    const translatedSet = new Set(translated.map(t => t.lang_code));
+
+    return targetLanguages.filter(lang => !translatedSet.has(lang));
+  }
+
+  /**
+   * Get keys that exist in source but are missing translations for a specific language
+   * Returns array of key paths that need translation
+   */
+  getMissingKeys(sourceKeys: string[], langCode: string): string[] {
+    if (sourceKeys.length === 0) return [];
+
+    // Get all keys that have CLEAN or MANUAL status for this language
+    const placeholders = sourceKeys.map(() => '?').join(',');
+    const stmt = this.db.prepare(`
+      SELECT key_path FROM sync_status 
+      WHERE lang_code = ? 
+        AND status IN ('CLEAN', 'MANUAL')
+        AND key_path IN (${placeholders})
+    `);
+
+    const translated = stmt.all(langCode, ...sourceKeys) as { key_path: string }[];
+    const translatedSet = new Set(translated.map(t => t.key_path));
+
+    return sourceKeys.filter(key => !translatedSet.has(key));
+  }
+
+  /**
+   * Get language coverage statistics for all configured languages
+   */
+  getLanguageCoverageStats(targetLanguages: string[]): LanguageCoverage[] {
+    const totalKeysResult = this.db.prepare(`
+      SELECT COUNT(DISTINCT key_path) as count FROM source_hashes
+    `).get() as { count: number };
+    const totalKeys = totalKeysResult.count;
+
+    return targetLanguages.map(langCode => {
+      const translatedResult = this.db.prepare(`
+        SELECT COUNT(*) as count FROM sync_status 
+        WHERE lang_code = ? AND status IN ('CLEAN', 'MANUAL')
+      `).get(langCode) as { count: number };
+
+      const translatedKeys = translatedResult.count;
+      const missingKeys = this.getMissingKeys(
+        this.getAllSourceKeys(),
+        langCode
+      );
+
+      return {
+        langCode,
+        totalKeys,
+        translatedKeys,
+        missingKeys,
+        coverage: totalKeys > 0 ? (translatedKeys / totalKeys) * 100 : 0,
+      };
+    });
+  }
+
+  /**
+   * Get all source key paths
+   */
+  private getAllSourceKeys(): string[] {
+    const stmt = this.db.prepare(`SELECT key_path FROM source_hashes`);
+    const rows = stmt.all() as { key_path: string }[];
+    return rows.map(r => r.key_path);
+  }
 
   /**
    * Close database connection
@@ -286,5 +439,29 @@ export interface FailedItem {
   prompt_version: number | null;
   updated_at: string;
   value_hash: string | null;
+}
+
+export interface ImportRecord {
+  keyPath: string;
+  langCode: string;
+  sourceHash: string;
+  targetHash: string;
+}
+
+export interface ImportStatistics {
+  totalRecords: number;
+  imported: number;
+  skipped: number;
+  errors: number;
+  languages: string[];
+  duration: number;
+}
+
+export interface LanguageCoverage {
+  langCode: string;
+  totalKeys: number;
+  translatedKeys: number;
+  missingKeys: string[];
+  coverage: number;
 }
 

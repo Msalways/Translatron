@@ -50,30 +50,30 @@ export interface TranslationResult {
     unitId: string;
     translatedText: string;
     confidence?: number;
-    rawResponse?: any;
+    rawResponse?: unknown;
 }
 
 /**
  * Extractor interface for identifying translatable strings
  */
 export interface Extractor {
-    extract(_sourceFiles: string[], _config: any): Promise<SourceUnit[]>;
+    extract(sourceFiles: string[], config: unknown): Promise<SourceUnit[]>;
 }
 
 /**
  * Translation planner interface
  */
 export interface TranslationPlanner {
-    createPlan(_sourceUnits: SourceUnit[], _targetLanguages: TargetLanguage[]): Promise<TranslationPlan>;
+    createPlan(sourceUnits: SourceUnit[], targetLanguages: TargetLanguage[]): Promise<TranslationPlan>;
 }
 
 /**
  * LLM provider interface
  */
 export interface LLMProvider {
-    translate(_batch: TranslationBatch, _prompt: PromptTemplate): Promise<TranslationResult[]>;
+    translate(batch: TranslationBatch, prompt: PromptTemplate): Promise<TranslationResult[]>;
     getModelFingerprint(): string;
-    estimateCost(_batch: TranslationBatch): number;
+    estimateCost(batch: TranslationBatch): number;
 }
 
 /**
@@ -118,14 +118,14 @@ export interface ValidationWarning {
  * Validation pipeline interface
  */
 export interface ValidationPipeline {
-    validate(_result: TranslationResult, _sourceUnit: SourceUnit): Promise<ValidationResult>;
+    validate(result: TranslationResult, sourceUnit: SourceUnit): Promise<ValidationResult>;
 }
 
 /**
  * File writer interface
  */
 export interface AtomicWriter {
-    writeTranslations(_filePath: string, _translations: Record<string, string>): Promise<void>;
+    writeTranslations(filePath: string, translations: Record<string, string>): Promise<void>;
 }
 
 /**
@@ -134,7 +134,7 @@ export interface AtomicWriter {
 export interface FileOperation {
     type: 'read' | 'write' | 'merge';
     filePath: string;
-    content?: any;
+    content?: unknown;
     backup?: boolean;
 }
 

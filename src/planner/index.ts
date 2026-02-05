@@ -6,7 +6,7 @@ import { computeHash } from '../utils/hash';
  * Translation planner that implements incremental processing
  */
 export class IncrementalTranslationPlanner implements TranslationPlanner {
-    constructor(private ledger: translatronxLedger) { }
+    constructor(private readonly ledger: translatronxLedger) { }
 
     /**
      * Create a translation plan based on change detection
@@ -109,13 +109,57 @@ export class IncrementalTranslationPlanner implements TranslationPlanner {
         const costPer1kTokens = 0.01; // Average across providers
         return (totalTokens / 1000) * costPer1kTokens;
     }
+
+    /**
+     * Create a plan for only specific languages (partial language translation)
+     * Useful when adding new languages to existing project
+     */
+    async createPartialLanguagePlan(
+        sourceUnits: SourceUnit[],
+        targetLanguages: TargetLanguage[],
+        specificLanguages: string[]
+    ): Promise<TranslationPlan> {
+        // Filter to only requested languages
+        const filteredLanguages = targetLanguages.filter(lang =>
+            specificLanguages.includes(lang.shortCode)
+        );
+
+        if (filteredLanguages.length === 0) {
+            return {
+                batches: [],
+                totalUnits: 0,
+                estimatedCost: 0,
+            };
+        }
+
+        // Use regular createPlan with filtered languages
+        return this.createPlan(sourceUnits, filteredLanguages);
+    }
+
+    /**
+     * Analyze which languages are missing translations for source units
+     * Returns a map of language codes to missing key counts
+     */
+    analyzeMissingLanguages(
+        sourceUnits: SourceUnit[],
+        targetLanguages: TargetLanguage[]
+    ): Map<string, number> {
+        const missingCounts = new Map<string, number>();
+
+        for (const lang of targetLanguages) {
+            const unitsNeedingTranslation = this.detectChanges(sourceUnits, lang.shortCode);
+            missingCounts.set(lang.shortCode, unitsNeedingTranslation.length);
+        }
+
+        return missingCounts;
+    }
 }
 
 /**
  * Manual override detector
  */
 export class ManualOverrideDetector {
-    constructor(private ledger: translatronxLedger) { }
+    constructor(private readonly ledger: translatronxLedger) { }
 
     /**
      * Detect if a translation has been manually overridden

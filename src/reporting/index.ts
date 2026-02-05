@@ -26,7 +26,7 @@ export interface StatsSummary {
  * Generates summaries and audit trails from the SQLite ledger
  */
 export class ReportingSystem {
-    constructor(private ledger: translatronxLedger) { }
+    constructor(private readonly ledger: translatronxLedger) { }
 
     /**
      * Get a summary of the latest run

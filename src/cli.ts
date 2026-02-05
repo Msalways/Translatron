@@ -6,6 +6,7 @@ import { TranslationCompiler } from './compiler/index';
 import { ReportingSystem } from './reporting/index';
 import { translatronxLedger } from './ledger/index';
 import { writeFileSync } from 'fs';
+import { importCommand } from './cli/commands/import';
 
 const program = new Command();
 
@@ -41,8 +42,8 @@ program
             console.log(chalk.gray(`  Duration: ${((stats.finishedAt!.getTime() - stats.startedAt.getTime()) / 1000).toFixed(2)}s\n`));
 
             process.exit(0);
-        } catch (error: any) {
-            console.error(chalk.red('❌ Sync failed:'), error.message);
+        } catch (error: unknown) {
+            console.error(chalk.red('❌ Sync failed:'), error instanceof Error ? error.message : String(error));
             process.exit(1);
         }
     });
@@ -57,9 +58,8 @@ program
             // Create default configuration
             const config = getDefaultConfig();
             const configContent = `import { defineConfig } from 'translatronx';
-
-export default defineConfig(${JSON.stringify(config, null, 2)});
-`;
+                export default defineConfig(${JSON.stringify(config, null, 2)});
+                `;
 
             // Write configuration file
             writeFileSync('translatronx.config.ts', configContent, 'utf-8');
@@ -71,8 +71,8 @@ export default defineConfig(${JSON.stringify(config, null, 2)});
             console.log(chalk.gray('  3. Run: translatronx sync\n'));
 
             process.exit(0);
-        } catch (error: any) {
-            console.error(chalk.red('❌ Init failed:'), error.message);
+        } catch (error: unknown) {
+            console.error(chalk.red('❌ Init failed:'), error instanceof Error ? error.message : String(error));
             process.exit(1);
         }
     });
@@ -104,8 +104,8 @@ program
 
             ledger.close();
             process.exit(0);
-        } catch (error: any) {
-            console.error(chalk.red('❌ Status check failed:'), error.message);
+        } catch (error: unknown) {
+            console.error(chalk.red('❌ Status check failed:'), error instanceof Error ? error.message : String(error));
             process.exit(1);
         }
     });
@@ -120,8 +120,8 @@ program
             console.log(chalk.gray('  This would validate all target files without making changes\n'));
 
             process.exit(0);
-        } catch (error: any) {
-            console.error(chalk.red('❌ Check failed:'), error.message);
+        } catch (error: unknown) {
+            console.error(chalk.red('❌ Check failed:'), error instanceof Error ? error.message : String(error));
             process.exit(1);
         }
     });
@@ -148,10 +148,13 @@ program
             console.log(chalk.gray(`  Tokens used: ${stats.tokensIn} (input) + ${stats.tokensOut} (output)\n`));
 
             process.exit(0);
-        } catch (error: any) {
-            console.error(chalk.red('❌ Retry failed:'), error.message);
+        } catch (error: unknown) {
+            console.error(chalk.red('❌ Retry failed:'), error instanceof Error ? error.message : String(error));
             process.exit(1);
         }
     });
+
+// Register import command
+program.addCommand(importCommand);
 
 program.parse();

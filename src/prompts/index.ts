@@ -16,7 +16,7 @@ export interface PromptConfig {
 export interface PromptContext {
     targetLanguage: string;
     targetCode: string;
-    sourceUnits?: any[];
+    sourceUnits?: unknown[];
     contextInfo?: string;
 }
 

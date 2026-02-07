@@ -204,7 +204,7 @@ export class TranslationCompiler {
 
         try {
             // Get all failed items from ledger
-            const failedItems = this.ledger.getFailedItems(options.lang, options.batch);
+            const failedItems = this.ledger.getFailedItems(options.lang);
 
             if (failedItems.length === 0) {
                 spinner.succeed(chalk.green('✓ No failed translations found'));

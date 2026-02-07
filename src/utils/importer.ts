@@ -102,11 +102,11 @@ export class TranslationImporter {
         const targetFlat = this.flattenJson(targetData);
 
         const sourceDf = pl.DataFrame({
-            keyPath: Object.keys(sourceFlat),
+            keyPath: pl.Series('keyPath', Object.keys(sourceFlat), pl.Utf8),
         });
 
         const targetDf = pl.DataFrame({
-            keyPath: Object.keys(targetFlat),
+            keyPath: pl.Series('keyPath', Object.keys(targetFlat), pl.Utf8),
         });
 
         // Find matched keys (inner join)

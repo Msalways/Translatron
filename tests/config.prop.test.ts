@@ -21,7 +21,7 @@ describe('Configuration Property Tests', () => {
                 type: fc.constant('openai'),
                 model: fc.string({ minLength: 1 }).map(s => s.replace(/[^a-z0-9-]/g, 'x')),
                 apiKey: fc.string({ minLength: 1 }).map(s => s.replace(/[^a-zA-Z0-9]/g, 'x')),
-                temperature: fc.float({ min: 0, max: 1 }),
+                temperature: fc.float({ min: 0, max: 1, noNaN: true }),
                 maxRetries: fc.integer({ min: 0, max: 10 }),
             }), { minLength: 1, maxLength: 2 }),
             validation: fc.record({

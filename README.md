@@ -334,8 +334,9 @@ The `language` field provides context to the LLM for better translations.
 {
   name: 'azure',
   type: 'azure-openai',
-  model: 'gpt-4o',
-  baseUrl: 'https://your-resource.openai.azure.com',
+  model: 'gpt-4o-deployment',  // Azure OpenAI deployment name
+  baseUrl: 'https://your-resource.openai.azure.com',  // Azure OpenAI endpoint
+  apiVersion: '2024-02-15-preview',    // Optional: API version (defaults to 2024-02-15-preview)
   apiKey: process.env.AZURE_OPENAI_KEY
 }
 ```

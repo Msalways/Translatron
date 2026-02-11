@@ -1205,8 +1205,8 @@ MIT © Shanthosh
 
 ## 📞 Support
 
-- **Issues:** [GitHub Issues](https://github.com/msalways/translatronx/issues)
-- **Discussions:** [GitHub Discussions](https://github.com/msalways/translatronx/discussions)
+- **Issues:** [GitHub Issues](https://github.com/msalways/translatron/issues)
+- **Discussions:** [GitHub Discussions](https://github.com/msalways/translatron/discussions)
 - **Email:** shanthubolt@gmail.com
 
 ---

@@ -22,6 +22,7 @@ export const ProviderConfigSchema = z.object({
     type: ProviderTypeSchema,
     apiKey: z.string().optional(),
     baseUrl: z.string().url().optional(),
+    apiVersion: z.string().optional(), // Azure OpenAI API version
     model: z.string().min(1, 'Model name is required'),
     temperature: z.number().min(0).max(2).default(0.3),
     maxRetries: z.number().int().min(0).default(3),

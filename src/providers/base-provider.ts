@@ -12,6 +12,7 @@ export abstract class BaseLLMProvider implements LLMProvider {
             model: string;
             temperature?: number;
             maxRetries?: number;
+            baseUrl?: string;
         }
     ) {
         this.maxRetries = config.maxRetries ?? 3;

@@ -50,7 +50,10 @@ export class TranslationCompiler {
             // Step 2: Update source hashes in ledger
             spinner.start('Updating source hashes...');
             const configHash = computeHash(JSON.stringify(this.config));
-            const runId = this.ledger.startRun(this.config.providers[0].model, configHash);
+            // Use model or deployment name based on provider type
+            const firstProvider = this.config.providers[0];
+            const modelIdentifier = firstProvider.model!;
+            const runId = this.ledger.startRun(modelIdentifier, configHash);
 
             for (const unit of sourceUnits) {
                 this.ledger.updateSourceHash(unit.keyPath, unit.sourceHash, undefined, runId);
@@ -75,7 +78,7 @@ export class TranslationCompiler {
                     tokensIn: 0,
                     tokensOut: 0,
                     costEstimateUsd: 0,
-                    model: this.config.providers[0].model,
+                    model: modelIdentifier,
                 };
             }
 
@@ -180,7 +183,7 @@ export class TranslationCompiler {
                 tokensIn: totalTokensIn,
                 tokensOut: totalTokensOut,
                 costEstimateUsd: actualCost,
-                model: this.config.providers[0].model,
+                model: modelIdentifier,
             };
 
         } catch (error) {

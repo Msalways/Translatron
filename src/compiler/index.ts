@@ -110,9 +110,9 @@ export class TranslationCompiler {
                         sourceUnits: batch.sourceUnits,
                     });
 
-                    // Get user prompt with source texts
+                    // Get user prompt with source texts and context
                     const sourceTexts = batch.sourceUnits.map(unit => unit.sourceText);
-                    const userPrompt = this.promptManager.getUserPrompt(sourceTexts);
+                    const userPrompt = this.promptManager.getUserPrompt(sourceTexts, batch.sourceUnits);
 
                     // Translate batch
                     const results = await provider.translate(batch, {
@@ -287,9 +287,9 @@ export class TranslationCompiler {
                         sourceUnits: batch.sourceUnits,
                     });
 
-                    // Get user prompt with source texts
+                    // Get user prompt with source texts and context
                     const sourceTexts = batch.sourceUnits.map(unit => unit.sourceText);
-                    const userPrompt = this.promptManager.getUserPrompt(sourceTexts);
+                    const userPrompt = this.promptManager.getUserPrompt(sourceTexts, batch.sourceUnits);
 
                     // Translate batch
                     const results = await provider.translate(batch, {

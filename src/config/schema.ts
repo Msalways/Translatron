@@ -39,6 +39,13 @@ export const ExtractorConfigSchema = z.object({
     pattern: z.string().or(z.array(z.string())),
     keyPrefix: z.string().optional(),
     exclude: z.array(z.string()).optional(),
+    // Context file configuration
+    contextFile: z.object({
+        enabled: z.boolean().default(false),
+        pattern: z.string().optional(),  // e.g., './locales/en.context.json'
+        autoGenerate: z.boolean().default(false),
+        autoUpdate: z.boolean().default(false),
+    }).optional(),
 });
 
 export type ExtractorConfig = z.infer<typeof ExtractorConfigSchema>;

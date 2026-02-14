@@ -11,6 +11,24 @@ export interface TargetLanguage {
 }
 
 /**
+ * Context metadata for a translation key
+ */
+export interface ContextMetadata {
+    value: string;           // Original source text (for validation)
+    context?: string;        // Optional context description
+    notes?: string;          // Optional additional notes
+    maxLength?: number;      // Optional max length constraint
+    tone?: string;           // Optional tone guidance
+}
+
+/**
+ * Context file structure (mirrors source file with metadata)
+ */
+export type ContextFile = {
+    [key: string]: ContextMetadata | ContextFile;
+};
+
+/**
  * A single translatable string with its context and metadata
  */
 export interface SourceUnit {
@@ -18,7 +36,7 @@ export interface SourceUnit {
     keyPath: string;
     sourceText: string;
     sourceHash: string;
-    context?: string;
+    context?: string;        // Optional context from context file
     placeholders: string[];
     sourceFile: string;
     schemaVersion: number;

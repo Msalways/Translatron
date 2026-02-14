@@ -123,17 +123,40 @@ Do not include any explanations, comments, or markdown formatting.`;
     /**
      * Build user prompt from source units
      * Uses custom userPrompt if provided, otherwise defaults to JSON array of source texts
+     * Includes context information when available
      */
-    getUserPrompt(sourceTexts: string[]): string {
+    getUserPrompt(sourceTexts: string[], sourceUnits?: Array<{ keyPath: string; sourceText: string; context?: string }>): string {
+        // Check if any units have context
+        const hasContext = sourceUnits?.some(unit => unit.context);
+
         // If custom user prompt is provided, use it
         if (this.config.userPrompt && this.config.userPrompt.length > 0) {
             // Join array with newlines for better readability
             const customPrompt = this.config.userPrompt.join('\n');
+
+            // If we have context, format as array of objects, otherwise just texts
+            if (hasContext && sourceUnits) {
+                const unitsWithContext = sourceUnits.map(unit => ({
+                    text: unit.sourceText,
+                    ...(unit.context ? { context: unit.context } : {})
+                }));
+                return `${customPrompt}\n\n${JSON.stringify(unitsWithContext, null, 0)}`;
+            }
+
             // Append source texts as JSON array
             return `${customPrompt}\n\n${JSON.stringify(sourceTexts, null, 0)}`;
         }
 
-        // Default: just return source texts as JSON array
+        // Default: format based on whether we have context
+        if (hasContext && sourceUnits) {
+            const unitsWithContext = sourceUnits.map(unit => ({
+                text: unit.sourceText,
+                ...(unit.context ? { context: unit.context } : {})
+            }));
+            return JSON.stringify(unitsWithContext, null, 0);
+        }
+
+        // No context, just return source texts as JSON array
         return JSON.stringify(sourceTexts, null, 0);
     }
 }

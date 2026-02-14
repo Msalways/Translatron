@@ -157,4 +157,8 @@ program
 // Register import command
 program.addCommand(importCommand);
 
+// Register context command
+import { contextCommand } from './cli/commands/context';
+program.addCommand(contextCommand);
+
 program.parse();

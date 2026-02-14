@@ -20,7 +20,6 @@ translatronx treats translations like source code:
 
 > translatronx is not another translation management system. It is a **translation compiler** — it treats language like code: build once → ship everywhere → zero runtime cost.
 
-
 ## 🌟 Features
 
 - **🔄 Incremental & Deterministic** - Only translates new/changed strings, same input = same output
@@ -31,19 +30,25 @@ translatronx treats translations like source code:
 - **📊 State-Aware** - SQLite ledger tracks changes without storing actual translations
 - **🛡️ Production-Ready** - Atomic writes, transaction safety, zero data loss on interruption
 - **🎨 Customizable Prompts** - Fine-tune translation quality with formatting, glossaries, and brand voice
+- **📝 Context Files** - Provide LLMs with context for each translation key to improve quality
 - **📈 Comprehensive Reporting** - Detailed statistics, cost estimates, and audit trails
 
 ## 📋 Table of Contents
 
 - [Installation](#-installation)
 - [Quick Start](#-quick-start)
-- [Configuration](#-configuration)
+- [Tutorial: Step-by-Step Guide](#-tutorial-step-by-step-guide)
+  - [Basic Translation Workflow](#1-basic-translation-workflow)
+  - [Using Context Files for Better Translations](#2-using-context-files-for-better-translations)
+  - [Managing Existing Translations](#3-managing-existing-translations)
+  - [Customizing Prompts](#4-customizing-prompts)
+  - [CI/CD Integration](#5-cicd-integration)
+- [Configuration Reference](#-configuration-reference)
 - [CLI Commands](#-cli-commands)
+- [Context Files](#-context-files)
 - [Advanced Usage](#-advanced-usage)
-- [Edge Cases & Troubleshooting](#-edge-cases--troubleshooting)
 - [Best Practices](#-best-practices)
 - [API Reference](#-api-reference)
-- [Contributing](#-contributing)
 
 ## 📦 Installation
 
@@ -76,39 +81,7 @@ npm install -g translatronx
 npx translatronx init
 ```
 
-This creates a `translatronx.config.ts` file in your project root:
-
-```typescript
-import { defineConfig } from 'translatronx';
-
-export default defineConfig({
-  sourceLanguage: 'en',
-  targetLanguages: [
-    { language: 'French', shortCode: 'fr' },
-    { language: 'German', shortCode: 'de' },
-    { language: 'Spanish', shortCode: 'es' }
-  ],
-  extractors: [
-    {
-      type: 'json',
-      pattern: './locales/en.json'
-    }
-  ],
-  providers: [
-    {
-      name: 'openai',
-      type: 'openai',
-      model: 'gpt-4o-mini',
-      temperature: 0.3
-    }
-  ],
-  output: {
-    dir: './locales',
-    format: 'json',
-    fileNaming: '{shortCode}.json'
-  }
-});
-```
+This creates a `translatronx.config.ts` file in your project root.
 
 ### 2. Set API Key
 
@@ -165,15 +138,514 @@ This generates:
 - `./locales/de.json`
 - `./locales/es.json`
 
-### 5. Check Status
+## 📚 Tutorial: Step-by-Step Guide
+
+### 1. Basic Translation Workflow
+
+#### Step 1.1: Initialize Your Project
+
+```bash
+# Create a new directory for your translations
+mkdir my-app-i18n
+cd my-app-i18n
+
+# Initialize npm project
+npm init -y
+
+# Install translatronx
+npm install --save-dev translatronx
+
+# Initialize configuration
+npx translatronx init
+```
+
+#### Step 1.2: Configure Your Project
+
+Edit `translatronx.config.ts`:
+
+```typescript
+import { defineConfig } from 'translatronx';
+
+export default defineConfig({
+  sourceLanguage: 'en',
+  targetLanguages: [
+    { language: 'French', shortCode: 'fr' },
+    { language: 'German', shortCode: 'de' },
+    { language: 'Spanish', shortCode: 'es' }
+  ],
+  extractors: [
+    {
+      type: 'json',
+      pattern: './locales/en.json'
+    }
+  ],
+  providers: [
+    {
+      name: 'openai',
+      type: 'openai',
+      model: 'gpt-4o-mini',
+      temperature: 0.3
+    }
+  ],
+  output: {
+    dir: './locales',
+    format: 'json',
+    fileNaming: '{shortCode}.json'
+  }
+});
+```
+
+#### Step 1.3: Create Your Source Translations
+
+Create `./locales/en.json`:
+
+```json
+{
+  "app": {
+    "title": "My Awesome App",
+    "description": "The best app you'll ever use"
+  },
+  "navigation": {
+    "home": "Home",
+    "about": "About",
+    "contact": "Contact Us"
+  },
+  "auth": {
+    "login": "Log in",
+    "logout": "Log out",
+    "signup": "Sign up",
+    "forgotPassword": "Forgot Password?"
+  },
+  "messages": {
+    "welcome": "Welcome, {username}!",
+    "goodbye": "See you soon, {username}!",
+    "error": "An error occurred. Please try again."
+  }
+}
+```
+
+#### Step 1.4: Run Your First Translation
+
+```bash
+# Set your API key
+export OPENAI_API_KEY=your-api-key-here
+
+# Run translation sync
+npx translatronx sync
+```
+
+**What happens:**
+1. translatronx reads your source file (`en.json`)
+2. Extracts all translatable strings
+3. Batches them efficiently for the LLM
+4. Generates translations for all target languages
+5. Writes output files (`fr.json`, `de.json`, `es.json`)
+6. Stores state in `.translatronx/ledger.sqlite`
+
+#### Step 1.5: Check Translation Status
 
 ```bash
 npx translatronx status
 ```
 
-## ⚙️ Configuration
+**Output:**
+```
+📊 Translation Coverage Report
 
-### Complete Configuration Reference
+┌─────────────┬────────┬───────────┬──────────┬──────────┐
+│ Language    │ Total  │ Clean     │ Dirty    │ Coverage │
+├─────────────┼────────┼───────────┼──────────┼──────────┤
+│ French (fr) │ 12     │ 12        │ 0        │ 100.0%   │
+│ German (de) │ 12     │ 12        │ 0        │ 100.0%   │
+│ Spanish (es)│ 12     │ 12        │ 0        │ 100.0%   │
+└─────────────┴────────┴───────────┴──────────┴──────────┘
+```
+
+#### Step 1.6: Update Source and Re-sync
+
+Add a new string to `en.json`:
+
+```json
+{
+  "app": {
+    "title": "My Awesome App",
+    "description": "The best app you'll ever use",
+    "tagline": "Built with love ❤️"  // NEW!
+  },
+  // ... rest of the file
+}
+```
+
+Run sync again:
+
+```bash
+npx translatronx sync
+```
+
+**Output:**
+```
+✅ Translation sync complete!
+
+Statistics:
+  Total strings: 13
+  Translated: 3    ← Only the new string!
+  Failed: 0
+  Skipped: 10      ← Existing translations skipped
+```
+
+**This is the power of incremental translation!** Only new/changed strings are translated, saving you time and money.
+
+---
+
+### 2. Using Context Files for Better Translations
+
+Context files allow you to provide additional information to the LLM about each translation key, resulting in more accurate and contextually appropriate translations.
+
+#### Step 2.1: Generate a Context File Template
+
+```bash
+npx translatronx context generate --source ./locales/en.json
+```
+
+**Output:**
+```
+📝 Generating context file template...
+
+  Source: /path/to/locales/en.json
+  Output: /path/to/locales/en.context.json
+  Merge:  No
+
+✅ Context file generated successfully!
+
+💡 Tip: Edit locales/en.context.json to add context for each translation key
+```
+
+This creates `./locales/en.context.json`:
+
+```json
+{
+  "app": {
+    "title": {
+      "value": "My Awesome App",
+      "context": ""
+    },
+    "description": {
+      "value": "The best app you'll ever use",
+      "context": ""
+    },
+    "tagline": {
+      "value": "Built with love ❤️",
+      "context": ""
+    }
+  },
+  "navigation": {
+    "home": {
+      "value": "Home",
+      "context": ""
+    },
+    // ... etc
+  }
+}
+```
+
+#### Step 2.2: Add Context to Your Keys
+
+Edit `en.context.json` to add helpful context:
+
+```json
+{
+  "app": {
+    "title": {
+      "value": "My Awesome App",
+      "context": "Main application title shown in the header and browser tab"
+    },
+    "description": {
+      "value": "The best app you'll ever use",
+      "context": "Marketing tagline shown on the landing page. Should be enthusiastic and engaging."
+    },
+    "tagline": {
+      "value": "Built with love ❤️",
+      "context": "Footer tagline. Keep the heart emoji in all translations."
+    }
+  },
+  "auth": {
+    "login": {
+      "value": "Log in",
+      "context": "Button text for user authentication. Should be concise and action-oriented."
+    },
+    "logout": {
+      "value": "Log out",
+      "context": "Button text for ending user session."
+    },
+    "forgotPassword": {
+      "value": "Forgot Password?",
+      "context": "Link text for password recovery. Should be phrased as a question."
+    }
+  },
+  "messages": {
+    "welcome": {
+      "value": "Welcome, {username}!",
+      "context": "Greeting shown when user logs in. {username} is the user's display name."
+    }
+  }
+}
+```
+
+#### Step 2.3: Validate Your Context File
+
+```bash
+npx translatronx context validate
+```
+
+**Output:**
+```
+🔍 Validating context file...
+
+  Source:  /path/to/locales/en.json
+  Context: /path/to/locales/en.context.json
+
+✅ Context file is valid!
+```
+
+#### Step 2.4: Enable Context in Configuration
+
+Update `translatronx.config.ts`:
+
+```typescript
+export default defineConfig({
+  // ... other config
+  extractors: [
+    {
+      type: 'json',
+      pattern: './locales/en.json',
+      contextFile: {
+        enabled: true,
+        pattern: './locales/en.context.json',
+        autoGenerate: false,
+        autoUpdate: false
+      }
+    }
+  ],
+  // ... rest of config
+});
+```
+
+#### Step 2.5: Re-translate with Context
+
+To see the improvement, let's force a retranslation:
+
+```bash
+# Delete existing translations
+rm ./locales/fr.json ./locales/de.json ./locales/es.json
+
+# Clear the ledger to force retranslation
+rm -rf .translatronx
+
+# Run sync with context
+npx translatronx sync
+```
+
+**The LLM now receives context for each string, resulting in better translations!**
+
+For example, without context:
+- "Log in" might be translated as "Connexion" (noun) in French
+
+With context ("Button text for user authentication"):
+- "Log in" is translated as "Se connecter" (verb/action) in French
+
+---
+
+### 3. Managing Existing Translations
+
+If you already have translations and want to add context files without affecting them:
+
+#### Step 3.1: Import Context from Source
+
+```bash
+npx translatronx context import --source ./locales/en.json
+```
+
+**Output:**
+```
+📥 Importing context from source...
+
+  Source:  /path/to/locales/en.json
+  Output:  /path/to/locales/en.context.json
+  Merge:   Yes
+
+✅ Context imported from source successfully!
+  • Existing context preserved
+  • New keys from source added
+  • Source values updated to match current source
+  • Your existing translations are safe
+
+💡 Tip: Your existing translations will NOT be affected.
+   Context files only improve future translations.
+```
+
+**Key Points:**
+- ✅ Your existing translation files (`fr.json`, `de.json`, etc.) are **never touched**
+- ✅ Existing context you've written is **preserved**
+- ✅ New keys from source are **added** with empty context
+- ✅ Only **future translations** will benefit from context
+
+#### Step 3.2: Sync Context When Source Changes
+
+When you add/remove keys in your source file:
+
+```bash
+npx translatronx context sync
+```
+
+**Output:**
+```
+🔄 Syncing context file with source...
+
+  Source:  /path/to/locales/en.json
+  Context: /path/to/locales/en.context.json
+
+✅ Context file synced successfully!
+  • New keys added
+  • Deleted keys removed
+  • Existing context preserved
+```
+
+---
+
+### 4. Customizing Prompts
+
+Improve translation quality by customizing the prompts sent to the LLM.
+
+#### Step 4.1: Add Custom Context
+
+```typescript
+export default defineConfig({
+  // ... other config
+  prompts: {
+    customContext: 'This is a mobile banking app. Use financial terminology and maintain a professional tone.',
+  }
+});
+```
+
+#### Step 4.2: Add Glossary
+
+```typescript
+export default defineConfig({
+  // ... other config
+  prompts: {
+    glossary: {
+      'Dashboard': 'Tableau de bord',
+      'Account': 'Compte',
+      'Transaction': 'Transaction',
+      'Balance': 'Solde'
+    }
+  }
+});
+```
+
+#### Step 4.3: Set Formatting Style
+
+```typescript
+export default defineConfig({
+  // ... other config
+  prompts: {
+    formatting: 'formal',  // 'formal' | 'casual' | 'technical'
+    brandVoice: 'Professional, trustworthy, and user-friendly'
+  }
+});
+```
+
+#### Step 4.4: Custom User Prompt
+
+```typescript
+export default defineConfig({
+  // ... other config
+  prompts: {
+    userPrompt: [
+      'Translate the following strings for a mobile banking application.',
+      'Maintain consistency with previous translations.',
+      'Use formal language and financial terminology.',
+      'Preserve all placeholders like {username} exactly as they appear.'
+    ]
+  }
+});
+```
+
+---
+
+### 5. CI/CD Integration
+
+#### Step 5.1: GitHub Actions
+
+Create `.github/workflows/translations.yml`:
+
+```yaml
+name: Update Translations
+
+on:
+  push:
+    paths:
+      - 'locales/en.json'
+      - 'locales/en.context.json'
+    branches:
+      - main
+
+jobs:
+  translate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Run translations
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: npx translatronx sync
+      
+      - name: Commit translations
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add locales/*.json
+          git diff --quiet && git diff --staged --quiet || git commit -m "chore: update translations"
+          git push
+```
+
+#### Step 5.2: GitLab CI
+
+Create `.gitlab-ci.yml`:
+
+```yaml
+translate:
+  image: node:20
+  stage: build
+  only:
+    changes:
+      - locales/en.json
+      - locales/en.context.json
+  script:
+    - npm ci
+    - npx translatronx sync
+    - git config user.email "ci@gitlab.com"
+    - git config user.name "GitLab CI"
+    - git add locales/*.json
+    - git diff --quiet && git diff --staged --quiet || (git commit -m "chore: update translations" && git push)
+  variables:
+    OPENAI_API_KEY: $OPENAI_API_KEY
+```
+
+---
+
+## ⚙️ Configuration Reference
+
+### Complete Configuration Example
 
 ```typescript
 import { defineConfig } from 'translatronx';
@@ -195,7 +667,13 @@ export default defineConfig({
       type: 'json',                    // 'json' | 'typescript' | 'custom'
       pattern: './locales/en.json',    // Glob pattern(s)
       keyPrefix: 'app',                // Optional: prefix for all keys
-      exclude: ['**/node_modules/**']  // Optional: exclude patterns
+      exclude: ['**/node_modules/**'], // Optional: exclude patterns
+      contextFile: {                   // Optional: context file configuration
+        enabled: true,
+        pattern: './locales/en.context.json',
+        autoGenerate: false,
+        autoUpdate: false
+      }
     }
   ],
 
@@ -257,170 +735,88 @@ export default defineConfig({
   advanced: {
     batchSize: 20,                   // Strings per LLM call
     concurrency: 3,                  // Parallel LLM requests
-    cacheDir: './.translatronx',      // State directory
+    cacheDir: './.translatronx',     // State directory
     ledgerPath: './.translatronx/ledger.sqlite',
     verbose: false                   // Enable verbose logging
   }
 });
 ```
 
-### Configuration Options Explained
+### Configuration Options
 
-#### Target Languages
+#### `sourceLanguage`
+- **Type:** `string`
+- **Required:** Yes
+- **Description:** ISO 639-1 language code for source language
 
-Each target language requires:
-- `language`: Full language name (e.g., "French", "German (Formal)")
-- `shortCode`: ISO code or custom code (e.g., "fr", "de-formal", "zh-Hans")
+#### `targetLanguages`
+- **Type:** `Array<{ language: string, shortCode: string }>`
+- **Required:** Yes
+- **Description:** Array of target languages with full names and codes
 
-The `language` field provides context to the LLM for better translations.
+#### `extractors`
+- **Type:** `Array<ExtractorConfig>`
+- **Required:** Yes
+- **Description:** Configuration for extracting translatable strings
 
-#### Extractors
+##### Extractor Context File Options
+- `enabled`: Enable context file support
+- `pattern`: Path to context file (defaults to `{source}.context.json`)
+- `autoGenerate`: Auto-generate context file if missing
+- `autoUpdate`: Auto-update context file when source changes
 
-**JSON Extractor:**
-```typescript
-{
-  type: 'json',
-  pattern: './locales/**/*.json',
-  exclude: ['**/node_modules/**']
-}
-```
+#### `providers`
+- **Type:** `Array<ProviderConfig>`
+- **Required:** Yes
+- **Description:** LLM provider configuration
 
-**TypeScript Extractor:**
-```typescript
-{
-  type: 'typescript',
-  pattern: './src/**/*.ts',
-  keyPrefix: 'app'
-}
-```
+Supported providers:
+- `openai` - OpenAI (GPT-4, GPT-3.5, etc.)
+- `anthropic` - Anthropic (Claude)
+- `groq` - Groq
+- `azure-openai` - Azure OpenAI
+- `openrouter` - OpenRouter
 
-#### Providers
+#### `validation`
+- **Type:** `ValidationConfig`
+- **Required:** No
+- **Description:** Translation validation rules
 
-**OpenAI:**
-```typescript
-{
-  name: 'openai',
-  type: 'openai',
-  model: 'gpt-4o-mini',  // or 'gpt-4o', 'gpt-4-turbo'
-  temperature: 0.3,
-  apiKey: process.env.OPENAI_API_KEY
-}
-```
+#### `output`
+- **Type:** `OutputConfig`
+- **Required:** Yes
+- **Description:** Output file configuration
 
-**Anthropic:**
-```typescript
-{
-  name: 'anthropic',
-  type: 'anthropic',
-  model: 'claude-3-5-sonnet-20241022',
-  temperature: 0.3,
-  apiKey: process.env.ANTHROPIC_API_KEY
-}
-```
+#### `prompts`
+- **Type:** `PromptConfig`
+- **Required:** No
+- **Description:** Prompt customization options
 
-**Groq:**
-```typescript
-{
-  name: 'groq',
-  type: 'groq',
-  model: 'llama-3.3-70b-versatile',
-  temperature: 0.3,
-  apiKey: process.env.GROQ_API_KEY
-}
-```
-
-**Azure OpenAI:**
-```typescript
-{
-  name: 'azure',
-  type: 'azure-openai',
-  model: 'gpt-4o-deployment',  // Azure OpenAI deployment name
-  baseUrl: 'https://your-resource.openai.azure.com',  // Azure OpenAI endpoint
-  apiVersion: '2024-02-15-preview',    // Optional: API version (defaults to 2024-02-15-preview)
-  apiKey: process.env.AZURE_OPENAI_KEY
-}
-```
-
-**OpenRouter:**
-```typescript
-{
-  name: 'openrouter',
-  type: 'openrouter',
-  model: 'anthropic/claude-3.5-sonnet',
-  apiKey: process.env.OPENROUTER_API_KEY
-}
-```
-
-**Local Models:**
-```typescript
-{
-  name: 'local',
-  type: 'local',
-  model: 'llama3',
-  baseUrl: 'http://localhost:11434'  // Ollama endpoint
-}
-```
-
-#### Output File Naming
-
-Use placeholders in `fileNaming`:
-- `{shortCode}` - Language short code (e.g., "fr")
-- `{language}` - Full language name (e.g., "French")
-
-Examples:
-- `{shortCode}.json` → `fr.json`
-- `{language}.translation.json` → `French.translation.json`
-- `translations/{shortCode}/app.json` → `translations/fr/app.json`
-
-## 🎮 CLI Commands
-
-### `translatronx init`
-
-Initialize translatronx configuration.
-
-```bash
-translatronx init
-```
-
-Creates `translatronx.config.ts` with default settings.
+#### `advanced`
+- **Type:** `AdvancedConfig`
+- **Required:** No
+- **Description:** Advanced performance and behavior settings
 
 ---
+
+## 🖥️ CLI Commands
 
 ### `translatronx sync`
 
 Synchronize translations (incremental processing).
 
 ```bash
-translatronx sync [options]
+npx translatronx sync [options]
 ```
 
 **Options:**
 - `-f, --force` - Force regeneration of manual overrides
-- `-v, --verbose` - Enable verbose output with streaming
+- `-v, --verbose` - Enable verbose output
 
-**Examples:**
-
+**Example:**
 ```bash
-# Normal incremental sync
-translatronx sync
-
-# Force regenerate all translations (ignores manual edits)
-translatronx sync --force
-
-# Verbose mode with detailed logging
-translatronx sync --verbose
+npx translatronx sync --verbose
 ```
-
-**What happens during sync:**
-1. Extracts source strings from configured files
-2. Computes hashes and detects changes
-3. Identifies new/modified strings needing translation
-4. Deduplicates identical strings across keys
-5. Batches strings for efficient LLM calls
-6. Translates using configured provider(s)
-7. Validates translations (placeholders, length, etc.)
-8. Atomically writes to target files
-9. Updates ledger with new state
 
 ---
 
@@ -429,33 +825,19 @@ translatronx sync --verbose
 Display coverage statistics and system state.
 
 ```bash
-translatronx status
+npx translatronx status
 ```
 
 **Output:**
 ```
-📊 Checking status...
+📊 Translation Coverage Report
 
-Project Statistics:
-  Total keys: 127
-  Manual overrides: 3
-
-Language Coverage:
-  French (fr):
-    ✓ Translated: 127
-    ✗ Failed: 0
-    Coverage: 100%
-
-  German (de):
-    ✓ Translated: 124
-    ✗ Failed: 3
-    Coverage: 98%
-
-Latest Run:
-  Run ID:    run_2026-01-29T06-30-00
-  Model:     gpt-4o-mini
-  Cost:      $0.0142
-  Duration:  Completed
+┌─────────────┬────────┬───────────┬──────────┬──────────┐
+│ Language    │ Total  │ Clean     │ Dirty    │ Coverage │
+├─────────────┼────────┼───────────┼──────────┼──────────┤
+│ French (fr) │ 12     │ 12        │ 0        │ 100.0%   │
+│ German (de) │ 12     │ 11        │ 1        │ 91.7%    │
+└─────────────┴────────┴───────────┴──────────┴──────────┘
 ```
 
 ---
@@ -465,713 +847,406 @@ Latest Run:
 Retry failed translation batches.
 
 ```bash
-translatronx retry [options]
+npx translatronx retry [options]
 ```
 
 **Options:**
 - `--batch <id>` - Specific batch ID to retry
-- `--lang <code>` - Specific language to retry (comma-separated)
+- `--lang <code>` - Specific language to retry
 - `--dry-run` - Show what would be retried without making changes
 
-**Examples:**
-
+**Example:**
 ```bash
-# Retry all failed translations
-translatronx retry
-
-# Retry only French translations
-translatronx retry --lang fr
-
-# Retry multiple languages
-translatronx retry --lang fr,de,es
-
-# Dry run to see what would be retried
-translatronx retry --dry-run
+npx translatronx retry --lang fr --dry-run
 ```
 
 ---
 
-### `translatronx import`
+### `translatronx init`
 
-Import existing translations into the ledger (for integrating with existing projects).
+Initialize translatronx configuration.
 
 ```bash
-translatronx import [options]
+npx translatronx init
+```
+
+Creates a `translatronx.config.ts` file in your project root.
+
+---
+
+### `translatronx context generate`
+
+Generate context file template from source file.
+
+```bash
+npx translatronx context generate [options]
 ```
 
 **Options:**
-- `--source <path>` - Source language file path (overrides config)
-- `--targets <paths>` - Target language files (comma-separated)
-- `--lang-map <json>` - JSON mapping of file paths to language codes
-- `--dry-run` - Show what would be imported without making changes
-- `--force` - Overwrite existing ledger entries
-
-**Examples:**
-
-```bash
-# Import from existing translation files (auto-detect from config)
-translatronx import
-
-# Import specific target files
-translatronx import --targets "locales/fr.json,locales/de.json"
-
-# Import with explicit language mapping
-translatronx import --lang-map '{"locales/french.json":"fr","locales/german.json":"de"}'
-
-# Preview import without making changes
-translatronx import --dry-run
-```
-
-**Use Cases:**
-
-1. **Migrating to Translatronx:**
-   ```bash
-   # You have existing translations in locales/
-   translatronx import
-   translatronx sync  # Only translates new/missing keys
-   ```
-
-2. **Adding New Languages:**
-   ```bash
-   # You have 8 languages, want to add 2 more
-   # Update config with 10 target languages
-   translatronx sync  # Automatically translates only the 2 new languages
-   ```
-
-3. **Partial Translations:**
-   ```bash
-   # Import what you have, sync fills in the gaps
-   translatronx import --targets "locales/fr.json"  # 60% coverage
-   translatronx sync  # Translates the missing 40%
-   ```
-
-**Output:**
-```
-📊 Analyzing coverage...
-
-  fr:
-    Total keys: 127
-    Matched keys: 120
-    Missing keys: 7
-    Coverage: 94.5%
-
-✅ Import Statistics:
-
-  Total records: 120
-  Imported: 120
-  Skipped: 0
-  Errors: 0
-  Languages: fr
-  Duration: 245ms
-
-💡 Tip: Run "translatronx status" to verify the import
-```
-
----
-
-### `translatronx check`
-
-Validate target files without making changes.
-
-```bash
-translatronx check
-```
-
-**Note:** This command validates:
-- Placeholder preservation
-- JSON structure integrity
-- Length ratios
-- Source text leakage
-
----
-
-## 🔥 Advanced Usage
-
-### Manual Override Protection
-
-translatronx detects when you manually edit translations and protects them from being overwritten.
-
-**Workflow:**
-
-1. **Initial translation:**
-   ```json
-   // fr.json (auto-generated)
-   {
-     "welcome": "Bienvenue dans notre application !"
-   }
-   ```
-
-2. **Manual edit:**
-   ```json
-   // fr.json (manually edited)
-   {
-     "welcome": "Bienvenue sur notre plateforme !"
-   }
-   ```
-
-3. **Next sync:**
-   - translatronx detects hash mismatch
-   - Marks as `MANUAL` status in ledger
-   - **Skips** this key in future syncs
-
-4. **Force regeneration (if needed):**
-   ```bash
-   translatronx sync --force
-   ```
-
-### Provider Fallback Chain
-
-Configure multiple providers with automatic fallback:
-
-```typescript
-providers: [
-  {
-    name: 'primary',
-    type: 'openai',
-    model: 'gpt-4o-mini',
-    fallback: 'backup'
-  },
-  {
-    name: 'backup',
-    type: 'anthropic',
-    model: 'claude-3-5-sonnet-20241022',
-    fallback: 'local'
-  },
-  {
-    name: 'local',
-    type: 'local',
-    model: 'llama3',
-    baseUrl: 'http://localhost:11434'
-  }
-]
-```
-
-**Fallback triggers:**
-- API rate limits
-- Network errors
-- Validation failures after max retries
-
-### Custom Prompt Engineering
-
-Fine-tune translation quality with custom prompts:
-
-```typescript
-prompts: {
-  // Context about your application
-  customContext: `
-    This is a healthcare application for patients and doctors.
-    Use medical terminology appropriately.
-    Maintain HIPAA-compliant language.
-  `,
-
-  // Tone and style
-  formatting: 'formal',
-
-  // Glossary for consistent terminology
-  glossary: {
-    'Appointment': 'Rendez-vous',
-    'Medical Record': 'Dossier médical',
-    'Prescription': 'Ordonnance'
-  },
-
-  // Brand voice
-  brandVoice: 'Compassionate, professional, and clear',
-
-  // Custom user prompt (advanced)
-  userPrompt: [
-    'Translate the following medical app strings.',
-    'Ensure all medical terms are accurate.',
-    'Use patient-friendly language where appropriate.'
-  ]
-}
-```
-
-### Same-Folder Source and Target
-
-By default, translatronx prevents source and target files in the same directory to avoid confusion. Enable if needed:
-
-```typescript
-output: {
-  dir: './locales',
-  allowSameFolder: true,
-  fileNaming: '{shortCode}.json'
-}
-```
-
-**Example structure:**
-```
-locales/
-  ├── en.json (source)
-  ├── fr.json (target)
-  ├── ta.json (target)
-  └── es.json (target)
-```
-
-### CI/CD Integration
-
-#### GitHub Actions
-
-```yaml
-name: Sync Translations
-
-on:
-  push:
-    branches: [main]
-    paths:
-      - 'locales/en.json'
-
-jobs:
-  translate:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      
-      - name: Setup Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: '18'
-      
-      - name: Install dependencies
-        run: npm ci
-      
-      - name: Sync translations
-        env:
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-        run: npx translatronx sync
-      
-      - name: Commit translations
-        run: |
-          git config user.name "Translation Bot"
-          git config user.email "bot@example.com"
-          git add locales/
-          git commit -m "chore: update translations" || exit 0
-          git push
-```
-
-#### GitLab CI
-
-```yaml
-translate:
-  stage: build
-  image: node:18
-  script:
-    - npm ci
-    - npx translatronx sync
-  artifacts:
-    paths:
-      - locales/
-  only:
-    changes:
-      - locales/en.json
-```
-
-### Programmatic API Usage
-
-Use translatronx programmatically in Node.js:
-
-```typescript
-import { TranslationCompiler, loadConfig } from 'translatronx';
-
-async function translateApp() {
-  // Load configuration
-  const config = await loadConfig();
-  
-  // Create compiler instance
-  const compiler = new TranslationCompiler(config);
-  
-  // Run sync
-  const stats = await compiler.sync({ verbose: true });
-  
-  console.log(`Translated ${stats.translatedUnits} strings`);
-  console.log(`Cost: $${stats.costEstimateUsd.toFixed(4)}`);
-  
-  // Close ledger connection
-  compiler.close();
-}
-
-translateApp().catch(console.error);
-```
-
-## 🐛 Edge Cases & Troubleshooting
-
-### Edge Case 1: Placeholder Variations
-
-**Problem:** Different placeholder formats in your app.
-
-**Solution:** translatronx automatically detects and preserves:
-- `{variable}` - Single braces
-- `{{variable}}` - Double braces
-- `$variable` - Dollar sign
-- `%s`, `%d` - Printf-style
-- `%1$s` - Positional
+- `--source <path>` - Source file path (overrides config)
+- `--output <path>` - Context file output path
+- `--merge` - Merge with existing context file
+- `--dry-run` - Preview changes without writing
 
 **Example:**
+```bash
+npx translatronx context generate --source ./locales/en.json
+```
+
+---
+
+### `translatronx context validate`
+
+Validate context file matches source file.
+
+```bash
+npx translatronx context validate [options]
+```
+
+**Options:**
+- `--source <path>` - Source file path (overrides config)
+- `--context <path>` - Context file path (overrides config)
+
+**Example:**
+```bash
+npx translatronx context validate
+```
+
+---
+
+### `translatronx context sync`
+
+Sync context file with source (add new keys, remove deleted keys).
+
+```bash
+npx translatronx context sync [options]
+```
+
+**Options:**
+- `--source <path>` - Source file path (overrides config)
+- `--context <path>` - Context file path (overrides config)
+- `--dry-run` - Preview changes without writing
+
+**Example:**
+```bash
+npx translatronx context sync --dry-run
+```
+
+---
+
+### `translatronx context import`
+
+Import/generate context file from source JSON (preserves existing translations).
+
+```bash
+npx translatronx context import [options]
+```
+
+**Options:**
+- `--source <path>` - Source JSON file to generate context from
+- `--output <path>` - Output context file path
+- `--merge` - Merge with existing context file (default: true)
+- `--dry-run` - Preview changes without writing
+
+**Example:**
+```bash
+npx translatronx context import --source ./locales/en.json
+```
+
+**Use Case:** Perfect for users who already have translations and want to add context files without affecting existing translations.
+
+---
+
+## 📝 Context Files
+
+Context files provide additional information to the LLM about each translation key, resulting in more accurate and contextually appropriate translations.
+
+### Context File Structure
+
+Context files mirror your source file structure:
+
+**Source File (`en.json`):**
 ```json
 {
   "greeting": "Hello, {name}!",
-  "count": "You have {{count}} messages",
-  "format": "User: %s, ID: %d"
+  "auth": {
+    "login": "Sign in",
+    "logout": "Sign out"
+  }
 }
 ```
 
-All placeholders are preserved exactly in translations.
-
-### Edge Case 2: Nested JSON Structures
-
-**Problem:** Deep nesting in translation files.
-
-**Solution:** translatronx flattens keys internally using dot notation:
-
+**Context File (`en.context.json`):**
 ```json
 {
+  "greeting": {
+    "value": "Hello, {name}!",
+    "context": "Greeting shown when user logs in. {name} is the user's display name.",
+    "notes": "Keep it friendly and welcoming",
+    "maxLength": 50,
+    "tone": "casual"
+  },
   "auth": {
     "login": {
-      "title": "Sign In",
-      "button": "Log In"
+      "value": "Sign in",
+      "context": "Button text for user authentication. Should be concise and action-oriented."
+    },
+    "logout": {
+      "value": "Sign out",
+      "context": "Button text for ending user session."
     }
   }
 }
 ```
 
-Internally tracked as:
-- `auth.login.title`
-- `auth.login.button`
+### Context Metadata Fields
 
-Output maintains original structure.
+Each key in a context file can have:
 
-### Edge Case 3: Empty or Whitespace Strings
+- **`value`** (required): The source text (for validation)
+- **`context`** (optional): Descriptive text for the LLM
+- **`notes`** (optional): Additional notes
+- **`maxLength`** (optional): Maximum character length
+- **`tone`** (optional): Desired tone (e.g., "formal", "casual", "technical")
 
-**Problem:** Empty strings or whitespace-only values.
+### Context File Workflow
 
-**Behavior:**
-- Empty strings (`""`) are skipped
-- Whitespace-only strings are normalized and translated
-- Leading/trailing whitespace is preserved if intentional
+1. **Generate template:**
+   ```bash
+   npx translatronx context generate
+   ```
 
-### Edge Case 4: Very Long Strings
+2. **Add context to keys:**
+   Edit the generated `en.context.json` file
 
-**Problem:** Strings exceeding token limits.
+3. **Validate:**
+   ```bash
+   npx translatronx context validate
+   ```
 
-**Solution:**
-- Automatic chunking for strings > 1000 characters
-- Configurable `maxLengthRatio` validation
-- Warning if target exceeds `source length × maxLengthRatio`
+4. **Enable in config:**
+   ```typescript
+   extractors: [{
+     type: 'json',
+     pattern: './locales/en.json',
+     contextFile: {
+       enabled: true,
+       pattern: './locales/en.context.json'
+     }
+   }]
+   ```
 
-### Edge Case 5: Special Characters & Encoding
+5. **Run sync:**
+   ```bash
+   npx translatronx sync
+   ```
 
-**Problem:** Unicode, emojis, RTL languages.
+### Benefits of Context Files
 
-**Solution:**
-- All text normalized to Unicode NFC
-- Full Unicode support including emojis 🎉
-- RTL languages (Arabic, Hebrew) handled correctly
-- HTML entities preserved
+- **Better Translation Quality** - LLMs understand the purpose and usage of each string
+- **Consistency** - Maintain consistent terminology across your app
+- **Tone Control** - Specify formal vs. casual tone per string
+- **Length Constraints** - Ensure translations fit UI constraints
+- **Optional** - Works with or without context files
+- **Backward Compatible** - No breaking changes to existing workflows
 
-### Edge Case 6: Interrupted Sync
+---
 
-**Problem:** Process killed during translation.
+## 🔧 Advanced Usage
 
-**Solution:**
-- Atomic file writes (temp file → rename)
-- Transactional ledger updates
-- No partial/corrupted files
-- Safe to re-run sync immediately
+### Manual Edits Protection
 
-### Edge Case 7: API Rate Limits
+translatronx automatically detects and protects manual edits:
 
-**Problem:** Provider rate limits exceeded.
+1. Translate your strings:
+   ```bash
+   npx translatronx sync
+   ```
 
-**Solution:**
-- Automatic retry with exponential backoff
-- Fallback to secondary provider
-- Configurable `maxRetries` per provider
-- Batch size adjustment
+2. Manually edit a translation in `fr.json`:
+   ```json
+   {
+     "welcome": "Bienvenue chez nous!"  // Manual edit
+   }
+   ```
 
-### Edge Case 8: Inconsistent Translations
+3. Run sync again:
+   ```bash
+   npx translatronx sync
+   ```
 
-**Problem:** Same source string translated differently.
+4. Your manual edit is preserved! The ledger marks it as `MANUAL` status.
 
-**Solution:**
-- Deduplication groups identical strings
-- Single translation reused across all occurrences
-- Glossary ensures terminology consistency
-- Prompt version tracking for reproducibility
-
-### Common Errors
-
-#### Error: "Configuration file not found"
-
+To force retranslation of manual edits:
 ```bash
-Error: Could not find translatronx.config.ts
+npx translatronx sync --force
 ```
 
-**Solution:**
-```bash
-translatronx init
-```
+---
 
-#### Error: "API key not set"
-
-```bash
-Error: OPENAI_API_KEY environment variable not set
-```
-
-**Solution:**
-```bash
-export OPENAI_API_KEY=your-key
-```
-
-#### Error: "Placeholder mismatch"
-
-```bash
-ValidationError: Placeholder mismatch in key "greeting"
-Source: {name}, Target: {nom}
-```
-
-**Solution:** This is a validation error preventing incorrect translations. The LLM will retry automatically.
-
-#### Error: "Source file not found"
-
-```bash
-Error: Source file not found: ./locales/en.json
-```
-
-**Solution:** Create the source file or update `extractors.pattern` in config.
-
-## ✅ Best Practices
-
-### 1. Version Control
-
-**Do commit:**
-- ✅ `translatronx.config.ts`
-- ✅ All translation files (`*.json`, `*.yaml`)
-- ✅ `.gitignore` entry for `.translatronx/`
-
-**Don't commit:**
-- ❌ `.translatronx/` directory (state files)
-- ❌ API keys (use environment variables)
-
-**Recommended `.gitignore`:**
-```gitignore
-.translatronx/
-*.sqlite
-*.sqlite-journal
-```
-
-### 2. Source File Organization
-
-**Good:**
-```
-locales/
-  ├── en.json          # Single source of truth
-  ├── fr.json          # Generated
-  ├── de.json          # Generated
-  └── es.json          # Generated
-```
-
-**Better:**
-```
-locales/
-  ├── source/
-  │   └── en.json      # Source (manually edited)
-  └── generated/
-      ├── fr.json      # Generated (auto-managed)
-      ├── de.json
-      └── es.json
-```
-
-### 3. Incremental Adoption
-
-Start small, expand gradually:
+### Multiple Providers with Fallback
 
 ```typescript
-// Phase 1: Single language
-targetLanguages: [
-  { language: 'French', shortCode: 'fr' }
-]
-
-// Phase 2: Add more languages
-targetLanguages: [
-  { language: 'French', shortCode: 'fr' },
-  { language: 'German', shortCode: 'de' },
-  { language: 'Spanish', shortCode: 'es' }
-]
-
-// Phase 3: Regional variants
-targetLanguages: [
-  { language: 'French (France)', shortCode: 'fr-FR' },
-  { language: 'French (Canada)', shortCode: 'fr-CA' },
-  { language: 'Spanish (Spain)', shortCode: 'es-ES' },
-  { language: 'Spanish (Mexico)', shortCode: 'es-MX' }
-]
+export default defineConfig({
+  providers: [
+    {
+      name: 'primary',
+      type: 'openai',
+      model: 'gpt-4o-mini',
+      fallback: 'backup'
+    },
+    {
+      name: 'backup',
+      type: 'anthropic',
+      model: 'claude-3-5-sonnet-20241022'
+    }
+  ]
+});
 ```
 
-### 4. Cost Optimization
+If the primary provider fails, translatronx automatically uses the backup.
 
-**Minimize costs:**
-- Use smaller models for simple strings (`gpt-4o-mini`)
-- Increase `batchSize` for fewer API calls
-- Use deduplication (enabled by default)
-- Set appropriate `temperature` (0.3 recommended)
+---
 
-**Cost estimation:**
-```bash
-# Dry run to estimate cost
-translatronx sync --dry-run
-```
-
-### 5. Quality Assurance
-
-**Multi-stage validation:**
+### Custom Validation Rules
 
 ```typescript
-validation: {
-  preservePlaceholders: true,
-  maxLengthRatio: 3,
-  preventSourceLeakage: true,
-  brandNames: ['YourBrand', 'ProductName']
-}
-```
-
-**Manual review workflow:**
-1. Run `translatronx sync`
-2. Review generated files
-3. Manually edit if needed
-4. Commit changes
-5. Future syncs preserve manual edits
-
-### 6. Prompt Optimization
-
-**Effective prompts:**
-
-```typescript
-prompts: {
-  customContext: `
-    Context: E-commerce checkout flow
-    Audience: International shoppers
-    Tone: Clear, reassuring, action-oriented
-  `,
-  formatting: 'casual',
-  glossary: {
-    'Cart': 'Panier',
-    'Checkout': 'Passer commande',
-    'Shipping': 'Livraison'
+export default defineConfig({
+  validation: {
+    customRules: [
+      (source, target) => {
+        // Ensure translations don't exceed source length by more than 50%
+        if (target.length > source.length * 1.5) {
+          return { isValid: false, error: 'Translation too long' };
+        }
+        return { isValid: true };
+      }
+    ]
   }
+});
+```
+
+---
+
+### Importing Existing Translations
+
+If you have existing translations you want to import:
+
+```bash
+npx translatronx import --source ./old-translations/fr.json --target fr
+```
+
+This imports your existing translations and marks them as `MANUAL` in the ledger, protecting them from being overwritten.
+
+---
+
+## 💡 Best Practices
+
+### 1. Use Context Files for Important Strings
+
+Add context to strings where:
+- The meaning is ambiguous (e.g., "Bank" - financial institution or river bank?)
+- Tone matters (e.g., error messages should be helpful, not scary)
+- Length constraints exist (e.g., button text must be short)
+- Cultural nuances matter (e.g., greetings, politeness levels)
+
+### 2. Keep Source Files Clean
+
+- Use clear, descriptive keys: `auth.loginButton` not `btn1`
+- Avoid abbreviations in source text
+- Use consistent placeholder format: `{variable}` not `{{variable}}` or `$variable`
+
+### 3. Leverage Glossaries
+
+Create a glossary for:
+- Brand names
+- Product names
+- Technical terms
+- Domain-specific terminology
+
+### 4. Run Translations in CI/CD
+
+Automate translations on source file changes:
+- Ensures translations are always up-to-date
+- Catches issues early
+- Reduces manual work
+
+### 5. Review Generated Translations
+
+While LLMs are good, they're not perfect:
+- Review critical strings (legal, security, payments)
+- Have native speakers spot-check
+- Use the `status` command to track coverage
+
+### 6. Use Incremental Workflow
+
+Don't retranslate everything:
+- Let translatronx track changes
+- Only force retranslation when necessary
+- Trust the ledger system
+
+---
+
+## 📖 API Reference
+
+### Programmatic Usage
+
+```typescript
+import { TranslationCompiler, loadConfig } from 'translatronx';
+
+async function main() {
+  // Load configuration
+  const config = await loadConfig();
+
+  // Create compiler
+  const compiler = new TranslationCompiler(config);
+
+  // Run sync
+  const stats = await compiler.sync({ verbose: true });
+
+  console.log(`Translated ${stats.translatedUnits} strings`);
+  console.log(`Cost: $${stats.costEstimateUsd.toFixed(4)}`);
+
+  // Close compiler
+  compiler.close();
 }
+
+main();
 ```
 
-### 7. Monitoring & Debugging
-
-**Enable verbose mode:**
-```bash
-translatronx sync --verbose
-```
-
-**Check status regularly:**
-```bash
-translatronx status
-```
-
-**Review run history:**
-```bash
-# Ledger stores run history
-sqlite3 .translatronx/ledger.sqlite "SELECT * FROM run_history ORDER BY started_at DESC LIMIT 5;"
-```
-
-## 📚 API Reference
-
-### `defineConfig(config: translatronxConfig)`
-
-Define and validate translatronx configuration.
+### Configuration API
 
 ```typescript
 import { defineConfig } from 'translatronx';
 
 export default defineConfig({
-  // ... configuration
+  // Type-safe configuration
+  sourceLanguage: 'en',
+  targetLanguages: [
+    { language: 'French', shortCode: 'fr' }
+  ],
+  // ... rest of config
 });
 ```
 
-### `loadConfig(configPath?: string)`
-
-Load configuration from file.
+### Custom Extractors
 
 ```typescript
-import { loadConfig } from 'translatronx';
+import { type Extractor, type SourceUnit } from 'translatronx';
 
-const config = await loadConfig('./custom.config.ts');
-```
-
-### `TranslationCompiler`
-
-Main orchestrator for translation compilation.
-
-```typescript
-import { TranslationCompiler } from 'translatronx';
-
-const compiler = new TranslationCompiler(config);
-```
-
-**Methods:**
-
-#### `sync(options?: SyncOptions): Promise<RunStatistics>`
-
-Synchronize translations.
-
-```typescript
-const stats = await compiler.sync({
-  force: false,
-  verbose: false
-});
-```
-
-#### `retryFailed(options?: RetryOptions): Promise<RetryStatistics>`
-
-Retry failed translations.
-
-```typescript
-const stats = await compiler.retryFailed({
-  lang: 'fr',
-  dryRun: false
-});
-```
-
-#### `close(): void`
-
-Close ledger connection.
-
-```typescript
-compiler.close();
-```
-
-### Types
-
-```typescript
-interface RunStatistics {
-  runId: string;
-  startedAt: Date;
-  finishedAt?: Date;
-  totalUnits: number;
-  translatedUnits: number;
-  failedUnits: number;
-  skippedUnits: number;
-  tokensIn: number;
-  tokensOut: number;
-  costEstimateUsd: number;
-  model: string;
-}
-
-interface RetryStatistics {
-  recoveredUnits: number;
-  remainingFailed: number;
-  tokensIn: number;
-  tokensOut: number;
+class CustomExtractor implements Extractor {
+  async extract(sourceFiles: string[], config: ExtractorConfig): Promise<SourceUnit[]> {
+    // Your custom extraction logic
+    return [];
+  }
 }
 ```
+
+---
 
 ## 🤝 Contributing
 
-Contributions are welcome! Please read our [Contributing Guide](CONTRIBUTING.md) for details.
+We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for details.
 
 ### Development Setup
 

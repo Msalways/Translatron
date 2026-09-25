@@ -1,0 +1,15 @@
+{
+  "auth": {
+    "login": {
+      "title": "Log in",
+      "button": "Sign in as {name}"
+    }
+  },
+  "checkout": {
+    "payNow": "Pay now",
+    "items": ["One item", "{count} items"]
+  },
+  "version": 2,
+  "enabled": true,
+  "nothing": null
+}

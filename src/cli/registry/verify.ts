@@ -1,0 +1,129 @@
+/**
+ * Registry verification (Epic 017, L1–L3/SEC-01).
+ *
+ * Pure reads: every segment (checksum, name-hash, schema) and snapshot
+ * (checksum, heads agreement), plus cross-file revision-ID conflict scan.
+ * Never moves, writes, or repairs — that is `repairRegistry`. Absent homes
+ * are a verdict, not a crash.
+ */
+import { existsSync, readdirSync } from 'node:fs';
+import { join } from 'node:path';
+import {
+    checkRevisionConflicts,
+    readSegmentFileFull,
+    trackRevisionIds,
+    type SeenRevisionIds,
+} from '../../registry/reader.js';
+import { readSnapshotFile } from '../../registry/snapshot.js';
+import { SEGMENTS_DIR, SNAPSHOTS_DIR } from '../../registry/schema.js';
+
+export interface FileVerdict {
+    file: string;
+    kind: 'segment' | 'snapshot';
+    ok: boolean;
+    errors: string[];
+}
+
+export interface VerifyReport {
+    registryDir: string;
+    present: boolean;
+    verdicts: FileVerdict[];
+    idConflicts: Array<{ revisionId: string; files: string[] }>;
+    segmentCount: number;
+    snapshotCount: number;
+    ok: boolean;
+}
+
+/** Verify a registry home. Pure except filesystem reads. */
+export function verifyRegistry(registryDir: string): VerifyReport {
+    const verdicts: FileVerdict[] = [];
+    const segmentsDir = join(registryDir, SEGMENTS_DIR);
+    const snapshotsDir = join(registryDir, SNAPSHOTS_DIR);
+    if (!existsSync(segmentsDir) && !existsSync(snapshotsDir)) {
+        return {
+            registryDir,
+            present: false,
+            verdicts,
+            idConflicts: [],
+            segmentCount: 0,
+            snapshotCount: 0,
+            ok: false,
+        };
+    }
+    const seenById: SeenRevisionIds = new Map();
+    const idFiles = new Map<string, Set<string>>();
+    let segmentCount = 0;
+    if (existsSync(segmentsDir)) {
+        for (const fileName of readdirSync(segmentsDir).filter((f) => f.endsWith('.trn')).sort()) {
+            segmentCount += 1;
+            const errors: string[] = [];
+            try {
+                const parsed = readSegmentFileFull(join(segmentsDir, fileName));
+                try {
+                    checkRevisionConflicts(parsed.revisions, fileName, seenById);
+                } catch (error) {
+                    errors.push(error instanceof Error ? error.message : String(error));
+                }
+                for (const rev of parsed.revisions) {
+                    const files = idFiles.get(rev.id) ?? new Set<string>();
+                    files.add(fileName);
+                    idFiles.set(rev.id, files);
+                }
+                trackRevisionIds(parsed.revisions, fileName, seenById);
+            } catch (error) {
+                errors.push(error instanceof Error ? error.message : String(error));
+            }
+            verdicts.push({ file: fileName, kind: 'segment', ok: errors.length === 0, errors });
+        }
+    }
+    let snapshotCount = 0;
+    if (existsSync(snapshotsDir)) {
+        for (const fileName of readdirSync(snapshotsDir).filter((f) => f.endsWith('.trnsnapshot')).sort()) {
+            snapshotCount += 1;
+            const errors: string[] = [];
+            try {
+                readSnapshotFile(join(snapshotsDir, fileName));
+            } catch (error) {
+                errors.push(error instanceof Error ? error.message : String(error));
+            }
+            verdicts.push({ file: fileName, kind: 'snapshot', ok: errors.length === 0, errors });
+        }
+    }
+    const idConflicts: VerifyReport['idConflicts'] = [];
+    for (const [revisionId, files] of idFiles) {
+        if (files.size > 1) idConflicts.push({ revisionId, files: [...files].sort() });
+    }
+    return {
+        registryDir,
+        present: true,
+        verdicts,
+        idConflicts,
+        segmentCount,
+        snapshotCount,
+        ok: verdicts.every((v) => v.ok) && idConflicts.length === 0,
+    };
+}
+
+/** Render the §18-shaped integrity report. */
+export function formatVerifyReport(report: VerifyReport): string {
+    const lines: string[] = [];
+    if (!report.present) {
+        return 'No v3 registry found. Run `translatronx migrate` for v2 projects.\n';
+    }
+    const failures = report.verdicts.filter((v) => !v.ok);
+    if (failures.length === 0 && report.idConflicts.length === 0) {
+        return `Registry verified: ${report.segmentCount} segment(s), ${report.snapshotCount} snapshot(s). All checks passed.\n`;
+    }
+    lines.push('Registry integrity failure', '');
+    for (const verdict of failures) {
+        lines.push(`${verdict.kind === 'segment' ? 'Segment' : 'Snapshot'}:`);
+        lines.push(`  ${verdict.file}`, '');
+        for (const error of verdict.errors) lines.push(`  ${error}`);
+        lines.push('');
+    }
+    for (const conflict of report.idConflicts) {
+        lines.push(`Conflicting revision ${conflict.revisionId} in: ${conflict.files.join(', ')}`, '');
+    }
+    lines.push('Registry segments are generated by Translatron and must not be edited.', '', 'Run:', '  translatronx registry repair', '');
+    return lines.join('\n');
+}

@@ -1,0 +1,10 @@
+[
+  { "source": "{count, plural, one {# file} other {# files}}", "target": "{count, plural, one {# fichier} other {# fichiers}}", "valid": true },
+  { "source": "{count, plural, one {# file} other {# files}}", "target": "{count, plural, one {# fichier}}", "valid": false, "reason": "missing other branch" },
+  { "source": "{count, plural, one {# file} other {# files}}", "target": "{total, plural, one {# fichier} other {# fichiers}}", "valid": false, "reason": "renamed argument" },
+  { "source": "{count, plural, one {# file} other {# files}}", "target": "{count} fichiers", "valid": false, "reason": "dropped plural structure" },
+  { "source": "{gender, select, male {He} female {She} other {They}} went home", "target": "{gender, select, male {Il} female {Elle} other {Ils}} est rentré", "valid": true },
+  { "source": "{count, plural, one {# file} other {# files}}", "target": "{count, plural, one {# fichier} other {# fichiers}", "valid": false, "reason": "unbalanced braces" },
+  { "source": "{count, frobnicate, one {# file} other {# files}}", "target": "{count, frobnicate, one {# file} other {# files}}", "valid": false, "reason": "unknown ICU type rejected on both sides" },
+  { "source": "Plain text", "target": "Texte brut", "valid": true }
+]

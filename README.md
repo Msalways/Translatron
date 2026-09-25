@@ -48,6 +48,7 @@ translatronx treats translations like source code:
 - [Context Files](#-context-files)
 - [Advanced Usage](#-advanced-usage)
 - [Best Practices](#-best-practices)
+- [v3 Engine](#v3-engine)
 - [API Reference](#-api-reference)
 
 ## 📦 Installation
@@ -1287,3 +1288,99 @@ MIT © Shanthosh
 ---
 
 **Made with ❤️ by developers, for developers**
+
+
+## v3 Engine (default)
+
+v3 is the default engine. It keeps your locale files developer-owned and adds a machine-owned registry (`.translatron/`) with full translation provenance. The legacy v2 engine remains available explicitly with `sync --v2`.
+
+### Minimal config (`translatronx.config.ts`)
+
+```ts
+import { defineConfig } from 'translatronx';
+
+export default defineConfig({
+  sourceLocale: 'en-GB',
+  locales: ['fr-FR', 'de-DE'],
+  providers: [{
+    name: 'openai',
+    type: 'openai',
+    model: 'gpt-5',
+    apiKey: process.env.OPENAI_API_KEY,
+    baseUrl: process.env.OPENAI_BASE_URL,
+  }],
+});
+```
+
+Run `translatronx init` to scaffold this TypeScript config. The default provider is OpenAI-compatible; use `--provider nvidia` for the NVIDIA OpenAI-compatible endpoint or another LangChain provider profile.
+
+### Normal config
+
+```ts
+export default defineConfig({
+  sourceLocale: 'en-GB',
+  locales: ['fr-FR'],
+  providers: [{
+    name: 'primary',
+    type: 'anthropic',
+    model: 'claude-sonnet-4-6',
+    apiKey: process.env.ANTHROPIC_API_KEY,
+  }],
+  skills: { paths: ['./translatron/skills'] },
+  execution: { maxLanguages: 4, maxGlobalModelCalls: 8 },
+  catalogs: { targetOnly: ['legal.countrySpecific.*'] },
+  policies: { removal: 'remove', stale: 'translate', reviewKeys: ['legal.*'] },
+});
+```
+
+Provider integration packages are lazy-loaded. `init --provider <id>` asks before installing a missing package; if installation is declined, the exact `npm install` command is printed.
+
+Supported v3 profiles include `openai`, `anthropic`, `azure_openai`, `langsmith`, `cohere`, `google`, `google-vertexai`, `google-vertexai-web`, `google-genai`, `ollama`, `mistralai`/`mistral`, `groq`, `bedrock`/`aws`, `deepseek`, `xai`, `cerebras`, `fireworks`, `together`, `perplexity`, `openrouter`, `nvidia`, and `local`. API-key providers use their documented LangChain environment variable; Azure also needs an endpoint/version, Vertex uses Google Application Default Credentials, Bedrock uses the AWS credential chain, and Ollama/local use a base URL without an API key.
+
+### Sync
+
+```bash
+npx translatronx sync --dry-run
+npx translatronx sync
+npx translatronx sync --json
+npx translatronx sync --force
+npx translatronx sync --affected-by-skill ja-JP
+```
+
+Use `npx translatronx sync --v2` only when you explicitly need the legacy engine.
+
+### Inspect
+
+```bash
+npx translatronx check
+npx translatronx check --catalogs-only
+npx translatronx status
+npx translatronx doctor
+npx translatronx explain checkout.payNow --lang ja-JP
+npx translatronx resolve auth.login --lang fr-FR
+```
+
+`check` is deterministic (no LLM, no writes) and fails CI on missing, orphaned, or invalid translations. `doctor` reports readiness, including warnings for `reviewKeys`/`targetOnly` patterns that match zero source keys. `explain` traces one key's state, origin, skills, model, translation memory, validation, and revision.
+
+### Registry
+
+```bash
+npx translatronx registry status
+npx translatronx registry verify
+npx translatronx registry repair
+```
+
+### Ownership
+
+- You own: locale files, config, skills. Edit freely.
+- Translatron owns: `.translatron/` (segments, snapshots, `meta.json`). Never hand-edit `.translatron/` — `registry verify` rejects tampering loudly and `registry repair` quarantines corrupt segments without rewriting history.
+- Team sync is normal git flow (pull/push your branch). There is no registry branch to switch to, and `.translatron/` cannot originate a merge conflict (content-hash file names).
+
+### Migration from v2
+
+```bash
+npx translatronx migrate
+npx translatronx migrate --apply
+```
+
+Dry run by default. SQLite is read read-only and kept as backup; file content always wins over stale ledger rows.

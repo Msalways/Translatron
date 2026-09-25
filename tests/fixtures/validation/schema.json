@@ -1,0 +1,7 @@
+[
+  { "name": "all ids exact", "units": ["u-1", "u-2"], "translations": [["u-1", "a"], ["u-2", "b"]], "valid": true },
+  { "name": "missing id", "units": ["u-1", "u-2"], "translations": [["u-1", "a"]], "valid": false },
+  { "name": "unknown id", "units": ["u-1"], "translations": [["u-1", "a"], ["u-9", "z"]], "valid": false },
+  { "name": "duplicate id", "units": ["u-1"], "translations": [["u-1", "a"], ["u-1", "b"]], "valid": false },
+  { "name": "empty translation", "units": ["u-1"], "translations": [["u-1", ""]], "valid": false }
+]

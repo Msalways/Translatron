@@ -22,6 +22,10 @@ export default [
             '@typescript-eslint': tseslint,
         },
         rules: {
+            // Base rule MUST stay off for TS: it false-positives on interface
+            // signatures and type-position params (typescript-eslint requires
+            // this; the TS-aware rule below is the real gate, as warn).
+            'no-unused-vars': 'off',
             '@typescript-eslint/no-unused-vars': ['warn', { argsIgnorePattern: '^_' }],
             '@typescript-eslint/explicit-function-return-type': 'off',
             '@typescript-eslint/no-explicit-any': 'warn',

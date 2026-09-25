@@ -171,6 +171,8 @@ export interface RunStatistics {
     tokensOut: number;
     costEstimateUsd: number;
     model: string;
+    /** Per-language outcome, keyed by short code (feeds `sync --json`). */
+    perLanguage?: Record<string, { translated: number; failed: number }>;
 }
 
 /**

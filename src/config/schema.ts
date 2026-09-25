@@ -6,10 +6,29 @@ import { z } from 'zod';
 export const ProviderTypeSchema = z.enum([
     'openai',
     'anthropic',
-    'groq',
-    'local',
     'azure-openai',
+    'azure_openai',
+    'langsmith',
+    'cohere',
+    'google',
+    'google-vertexai',
+    'google-vertexai-web',
+    'google-genai',
+    'ollama',
+    'mistralai',
+    'mistral',
+    'groq',
+    'bedrock',
+    'aws',
+    'deepseek',
+    'xai',
+    'cerebras',
+    'fireworks',
+    'together',
+    'perplexity',
+    'local',
     'openrouter',
+    'nvidia',
 ]);
 
 export type ProviderType = z.infer<typeof ProviderTypeSchema>;
@@ -23,6 +42,12 @@ export const ProviderConfigSchema = z.object({
     apiKey: z.string().optional(),
     baseUrl: z.string().url().optional(),
     apiVersion: z.string().optional(), // Azure OpenAI API version
+    region: z.string().optional(),
+    project: z.string().optional(),
+    location: z.string().optional(),
+    endpoint: z.string().optional(),
+    /** Provider-specific options forwarded to the LangChain integration. */
+    options: z.record(z.unknown()).optional(),
     model: z.string().min(1, 'Model name is required'),
     temperature: z.number().min(0).max(2).default(0.3),
     maxRetries: z.number().int().min(0).default(3),
@@ -109,6 +134,16 @@ export const AdvancedConfigSchema = z.object({
 export type AdvancedConfig = z.infer<typeof AdvancedConfigSchema>;
 
 /**
+ * Catalog configuration schema (v3, Epic 013).
+ * `targetOnly` exempts legitimate locale-specific keys from orphan cleanup.
+ */
+export const CatalogsConfigSchema = z.object({
+    targetOnly: z.array(z.string()).default([]),
+}).default({ targetOnly: [] });
+
+export type CatalogsConfig = z.infer<typeof CatalogsConfigSchema>;
+
+/**
  * Target language definition
  */
 export const TargetLanguageSchema = z.object({
@@ -117,6 +152,65 @@ export const TargetLanguageSchema = z.object({
 });
 
 export type TargetLanguage = z.infer<typeof TargetLanguageSchema>;
+
+/**
+ * Skills configuration schema (v3).
+ * Optional: zero skills is a valid project (core policy alone).
+ */
+export const SkillsConfigSchema = z.object({
+    dir: z.string().default('./translatron/skills'),
+    paths: z.array(z.string()).default([]),
+}).default({ dir: './translatron/skills', paths: [] });
+
+export type SkillsConfig = z.infer<typeof SkillsConfigSchema>;
+
+/**
+ * Registry configuration schema (v3, Epic 012 — committed machine-owned folder).
+ * No `remote`: team sync is normal git flow on the dev branch (ref sync is post-v1).
+ */
+export const RegistryConfigSchema = z.object({
+    dir: z.string().default('./.translatron'),
+}).default({ dir: './.translatron' });
+
+export type RegistryConfig = z.infer<typeof RegistryConfigSchema>;
+
+/**
+ * Behavioral policies (v3, Epic 014). The only behavioral knobs; everything
+ * else is derived. `stale: 'review'` is reserved for the review-UX program.
+ */
+export const PoliciesConfigSchema = z.object({
+    removal: z.enum(['remove', 'warn-only', 'preserve']).default('remove'),
+    stale: z.enum(['translate', 'preserve', 'review']).default('translate'),
+    reviewKeys: z.array(z.string()).default([]),
+}).default({ removal: 'remove', stale: 'translate', reviewKeys: [] });
+
+export type PoliciesConfig = z.infer<typeof PoliciesConfigSchema>;
+
+/**
+ * v3 shorthand authoring form (Epic 015). Accepted anywhere a config loads;
+ * normalized to the canonical shape before use.
+ */
+export interface TranslatronV3Config {
+    sourceLocale?: string;
+    locales?: string[];
+    model?: string;
+    skills?: { dir?: string; paths?: string[] };
+    execution?: {
+        maxLanguages?: number;
+        maxBatchesPerLanguage?: number;
+        maxGlobalModelCalls?: number;
+        maxUnitsPerBatch?: number;
+    };
+    providers?: unknown;
+    extractors?: unknown;
+    validation?: unknown;
+    output?: unknown;
+    prompts?: unknown;
+    advanced?: unknown;
+    registry?: unknown;
+    catalogs?: unknown;
+    policies?: unknown;
+}
 
 /**
  * Main translatronx configuration schema
@@ -130,6 +224,10 @@ export const translatronxConfigSchema = z.object({
     output: OutputConfigSchema.default({}),
     prompts: PromptConfigSchema,
     advanced: AdvancedConfigSchema,
+    skills: SkillsConfigSchema.optional(),
+    registry: RegistryConfigSchema.optional(),
+    catalogs: CatalogsConfigSchema.optional(),
+    policies: PoliciesConfigSchema.optional(),
 });
 
 export type translatronxConfig = z.infer<typeof translatronxConfigSchema>;

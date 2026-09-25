@@ -79,6 +79,7 @@ export class TranslationCompiler {
                     tokensOut: 0,
                     costEstimateUsd: 0,
                     model: modelIdentifier,
+                    perLanguage: {},
                 };
             }
 
@@ -92,6 +93,13 @@ export class TranslationCompiler {
             let failedUnits = 0;
             let totalTokensIn = 0;
             let totalTokensOut = 0;
+            const perLanguage: Record<string, { translated: number; failed: number }> = {};
+
+            const tally = (lang: string, outcome: 'translated' | 'failed', count = 1): void => {
+                const entry = perLanguage[lang] ?? { translated: 0, failed: 0 };
+                entry[outcome] += count;
+                perLanguage[lang] = entry;
+            };
 
             spinner.start(`Translating ${plan.totalUnits} strings...`);
 
@@ -132,6 +140,7 @@ export class TranslationCompiler {
                         if (!validation.isValid) {
                             console.error(chalk.red(`✗ Validation failed for ${sourceUnit.keyPath}:`), validation.errors);
                             failedUnits++;
+                            tally(batch.targetLanguage, 'failed');
                             this.ledger.updateSyncStatus(sourceUnit.keyPath, batch.targetLanguage, '', 'FAILED');
                             continue;
                         }
@@ -154,6 +163,7 @@ export class TranslationCompiler {
                         );
 
                         translatedUnits++;
+                        tally(batch.targetLanguage, 'translated');
                     }
 
                     // Update token counts (rough estimate)
@@ -163,6 +173,7 @@ export class TranslationCompiler {
                 } catch (error) {
                     console.error(chalk.red(`✗ Failed to translate batch ${batch.batchId}:`), error);
                     failedUnits += batch.sourceUnits.length;
+                    tally(batch.targetLanguage, 'failed', batch.sourceUnits.length);
                 }
             }
 
@@ -184,6 +195,7 @@ export class TranslationCompiler {
                 tokensOut: totalTokensOut,
                 costEstimateUsd: actualCost,
                 model: modelIdentifier,
+                perLanguage,
             };
 
         } catch (error) {

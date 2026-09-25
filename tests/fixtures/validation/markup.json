@@ -1,0 +1,9 @@
+[
+  { "source": "Click <b>here</b>", "target": "Cliquez <b>ici</b>", "valid": true },
+  { "source": "Click <b>here</b>", "target": "Cliquez ici", "valid": false, "reason": "dropped <b>" },
+  { "source": "Click <b>here</b>", "target": "Cliquez <strong>ici</strong>", "valid": false, "reason": "renamed tag" },
+  { "source": "<a href=\"/x\">Link</a> and <br/>", "target": "<a href=\"/x\">Lien</a> et <br/>", "valid": true },
+  { "source": "<li>one</li><li>two</li>", "target": "<li>un</li>", "valid": false, "reason": "dropped repeated tag" },
+  { "source": "I <3 this", "target": "J'adore ça", "valid": true, "reason": "prose angle bracket is not markup" },
+  { "source": "No tags", "target": "Sans balises", "valid": true }
+]

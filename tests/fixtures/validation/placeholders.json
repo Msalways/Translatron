@@ -1,0 +1,9 @@
+[
+  { "source": "Hello {name}", "target": "Bonjour {name}", "valid": true },
+  { "source": "Hello {name}", "target": "Bonjour", "valid": false, "reason": "Missing {name}" },
+  { "source": "Hello {name}", "target": "Bonjour {name} {extra}", "valid": false, "reason": "Unexpected {extra}" },
+  { "source": "{count} items", "target": "{count} articles", "valid": true },
+  { "source": "Progress: %d%%", "target": "Progression : %d%%", "valid": true },
+  { "source": "Hi {{user}}, you have $1", "target": "Salut", "valid": false, "reason": "drops two placeholder styles" },
+  { "source": "No placeholders here", "target": "Aucun espace réservé ici", "valid": true }
+]

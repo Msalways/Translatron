@@ -1,6 +1,6 @@
 {
   "name": "translatronx",
-  "version": "2.1.0",
+  "version": "3.0.0",
   "description": "Deterministic, incremental, build-time translation compiler using LLMs",
   "repository": {
     "type": "git",

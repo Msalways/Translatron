@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       version_bump:
-        description: Version bump
+        description: Bump a published version, or retry the current unpublished version
         required: true
         default: patch
         type: choice
@@ -16,7 +16,6 @@ on:
 
 permissions:
   contents: write
-  id-token: write
 
 concurrency:
   group: npm-publish
@@ -36,6 +35,15 @@ jobs:
           node-version: 24
           registry-url: https://registry.npmjs.org
           package-manager-cache: false
+
+      - name: Verify npm token secret
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          if [ -z "$NODE_AUTH_TOKEN" ]; then
+            echo '::error::GitHub Actions secret NPM_TOKEN is missing or empty'
+            exit 1
+          fi
 
       - name: Verify current master
         run: |
@@ -103,8 +111,10 @@ jobs:
             exit 1
           fi
 
-      - name: Publish package with npm trusted publishing
+      - name: Publish package with npm token
         id: npm_publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
           VERSION="$(node -p "require('./package.json').version")"
           DIST_TAG="latest"
@@ -116,7 +126,7 @@ jobs:
       - name: Explain npm publishing access
         if: failure() && steps.npm_publish.outcome == 'failure'
         run: |
-          echo '::error::If npm returned 404, check the translatronx trusted publisher on npmjs.com: Msalways/Translatron, workflow npm-publish.yml, direct npm publish allowed.'
+          echo '::error::If npm returned 404, verify NPM_TOKEN can publish translatronx and the package allows token publishing.'
 
       - name: Push release version
         if: inputs.version_bump != 'retry-current'

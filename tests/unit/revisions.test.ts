@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest';
+import { tmpdir } from 'node:os';
 import {
     buildAdoptionRevision,
     buildAgentRevision,
@@ -93,11 +94,11 @@ describe('revisions: already-recorded guard (E-T007)', () => {
 
 describe('revisions: git HEAD helper (E-T007)', () => {
     it('returns null outside git repos', () => {
-        expect(currentGitCommit('C:\\definitely-not-a-repo-014')).toBeNull();
+        expect(currentGitCommit(tmpdir())).toBeNull();
     });
 
     it('returns the HEAD sha inside this repo', () => {
-        const sha = currentGitCommit('C:\\Users\\shant\\Videos\\Translatron');
+        const sha = currentGitCommit(process.cwd());
         expect(sha).toMatch(/^[0-9a-f]{40}$/);
     });
 

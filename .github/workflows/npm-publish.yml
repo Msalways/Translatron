@@ -1,9 +1,7 @@
 name: Publish to npm
 
 on:
-  push:
-    tags:
-      - 'v*'
+  workflow_dispatch:
 
 permissions:
   contents: write
@@ -18,7 +16,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout tagged release
+      - name: Checkout release source
         uses: actions/checkout@v7
 
       - name: Setup Node.js
@@ -28,12 +26,11 @@ jobs:
           registry-url: https://registry.npmjs.org
           package-manager-cache: false
 
-      - name: Verify tag matches package version
+      - name: Verify default branch and package version
         run: |
           VERSION="$(node -p "require('./package.json').version")"
-          EXPECTED_TAG="v${VERSION}"
-          if [ "$GITHUB_REF_NAME" != "$EXPECTED_TAG" ]; then
-            echo "Tag $GITHUB_REF_NAME does not match package.json version $VERSION" >&2
+          if [ "$GITHUB_REF" != 'refs/heads/master' ]; then
+            echo "Run this workflow from master to publish package.json version $VERSION" >&2
             exit 1
           fi
           echo "Publishing translatronx $VERSION"
@@ -70,7 +67,7 @@ jobs:
         with:
           script: |
             const version = require('./package.json').version;
-            const tag = context.ref.replace('refs/tags/', '');
+            const tag = `v${version}`;
             try {
               await github.rest.repos.getReleaseByTag({
                 owner: context.repo.owner,
@@ -84,6 +81,7 @@ jobs:
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 tag_name: tag,
+                target_commitish: context.sha,
                 name: `translatronx v${version}`,
                 generate_release_notes: true,
                 draft: false,

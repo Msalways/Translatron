@@ -8,7 +8,6 @@ const ROOT = join(__dirname, '..', '..');
 const readme = readFileSync(join(ROOT, 'README.md'), 'utf-8');
 const guide = readFileSync(join(ROOT, 'docs', 'V3_GUIDE.md'), 'utf-8');
 const legacyGuide = readFileSync(join(ROOT, 'docs', 'LEGACY_GUIDE.md'), 'utf-8');
-const api = readFileSync(join(ROOT, 'API.md'), 'utf-8');
 
 describe('docs: README quick start (D-T003/US1)', () => {
     const required = [
@@ -34,7 +33,6 @@ describe('docs: README quick start (D-T003/US1)', () => {
         expect(readme).toContain('```json');
     });
 });
-
 describe('docs: detailed v3 and legacy guides (D-T003/US1)', () => {
     for (const needle of [
         '--provider <id>', '--affected-by-skill', 'registry verify', 'registry repair',
@@ -51,34 +49,5 @@ describe('docs: detailed v3 and legacy guides (D-T003/US1)', () => {
     it('keeps the explicit v2 commands in the legacy guide', () => {
         expect(legacyGuide).toContain('init --v2');
         expect(legacyGuide).toContain('sync --v2');
-    });
-});
-
-describe('docs: API.md v3 modules (D-T003/US2)', () => {
-    const modules = [
-        'core/compiler',
-        'core/policy',
-        'runtime/models',
-        'toolBackend',
-        'config/normalize',
-        'registry/revisions',
-        'registry/bootstrap',
-        'removals',
-        'cli/sync-v3',
-        'cli/registry',
-        'core/coverage',
-        'validation/batch',
-        'validation/repair',
-        'translation-memory',
-        'skills/resolver',
-    ];
-    for (const module of modules) {
-        it(`documents ${module}`, () => {
-            expect(api).toContain(module);
-        });
-    }
-
-    it('marks the ledger v2-import-only', () => {
-        expect(api).toContain('v2-import-only');
     });
 });

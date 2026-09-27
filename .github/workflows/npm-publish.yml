@@ -12,6 +12,7 @@ on:
           - patch
           - minor
           - major
+          - retry-current
 
 permissions:
   contents: write
@@ -51,26 +52,36 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Bump package version
+      - name: Select release version
         id: version
         env:
           VERSION_BUMP: ${{ inputs.version_bump }}
         run: |
           case "$VERSION_BUMP" in
-            patch|minor|major) ;;
+            patch|minor|major|retry-current) ;;
             *) echo "Unsupported version bump: $VERSION_BUMP" >&2; exit 1 ;;
           esac
-          npm --no-git-tag-version version "$VERSION_BUMP"
-          VERSION="$(node -p "require('./package.json').version")"
-          TAG_REF="$(git ls-remote --tags origin "refs/tags/v${VERSION}")"
-          if [ -n "$TAG_REF" ]; then
-            echo "Release tag v${VERSION} already exists" >&2
+          CURRENT_VERSION="$(node -p "require('./package.json').version")"
+          if npm view "translatronx@${CURRENT_VERSION}" version >/dev/null 2>&1; then
+            if [ "$VERSION_BUMP" = 'retry-current' ]; then
+              echo "translatronx ${CURRENT_VERSION} is already published" >&2
+              exit 1
+            fi
+            npm --no-git-tag-version version "$VERSION_BUMP"
+            VERSION="$(node -p "require('./package.json').version")"
+            TAG_REF="$(git ls-remote --tags origin "refs/tags/v${VERSION}")"
+            if [ -n "$TAG_REF" ]; then
+              echo "Release tag v${VERSION} already exists" >&2
+              exit 1
+            fi
+            git config user.name 'github-actions[bot]'
+            git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+            git add package.json package-lock.json
+            git commit -m "chore(release): v${VERSION}"
+          elif [ "$VERSION_BUMP" != 'retry-current' ]; then
+            echo "translatronx ${CURRENT_VERSION} is not published; choose retry-current to finish this release" >&2
             exit 1
           fi
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add package.json package-lock.json
-          git commit -m "chore(release): v${VERSION}"
           echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
 
       - name: Typecheck
@@ -84,10 +95,16 @@ jobs:
         env:
           CI: true
 
-      - name: Push release version
-        run: git push origin HEAD:master
+      - name: Verify master before publishing
+        run: |
+          git fetch origin master
+          if [ "$(git rev-parse origin/master)" != "$GITHUB_SHA" ]; then
+            echo 'Master changed during validation; start a new release run' >&2
+            exit 1
+          fi
 
       - name: Publish package with npm trusted publishing
+        id: npm_publish
         run: |
           VERSION="$(node -p "require('./package.json').version")"
           DIST_TAG="latest"
@@ -95,6 +112,15 @@ jobs:
             *-*) DIST_TAG="next" ;;
           esac
           npm publish --access public --tag "$DIST_TAG"
+
+      - name: Explain npm publishing access
+        if: failure() && steps.npm_publish.outcome == 'failure'
+        run: |
+          echo '::error::If npm returned 404, check the translatronx trusted publisher on npmjs.com: Msalways/Translatron, workflow npm-publish.yml, direct npm publish allowed.'
+
+      - name: Push release version
+        if: inputs.version_bump != 'retry-current'
+        run: git push origin HEAD:master
 
       - name: Create GitHub release
         uses: actions/github-script@v9

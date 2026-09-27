@@ -4,11 +4,11 @@
   "description": "Deterministic, incremental, build-time translation compiler using LLMs",
   "repository": {
     "type": "git",
-    "url": "https://github.com/Msalways/Translatron.git"
+    "url": "git+https://github.com/Msalways/Translatron.git"
   },
   "type": "module",
   "bin": {
-    "translatronx": "./dist/cli.js"
+    "translatronx": "dist/cli.js"
   },
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -28,7 +28,7 @@
     "lint:fix": "eslint src --ext .ts --fix",
     "typecheck": "tsc --noEmit",
     "clean": "rimraf dist",
-    "prepare": "husky install",
+    "prepare": "husky",
     "commitlint": "commitlint --edit"
   },
   "keywords": [

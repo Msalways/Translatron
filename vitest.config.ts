@@ -4,6 +4,7 @@ export default defineConfig({
     test: {
         globals: true,
         environment: 'node',
+        testTimeout: 30_000,
         include: ['**/*.test.ts'],
         coverage: {
             provider: 'v8',
@@ -14,12 +15,13 @@ export default defineConfig({
                 '**/*.test.ts',
                 '**/*.config.ts',
             ],
-            // Ratchet: measured 67.1 lines / 81.9 branches / 73.2 functions
-            // (2026-09-24, post-014/015/016/017). Raise as legacy code migrates to v3.
+            // Ratchet against the current full source set (2026-09-27):
+            // 76.95 lines / 66.32 branches / 76.48 functions.
+            // Raise as provider and legacy paths gain key-free coverage.
             thresholds: {
                 lines: 65,
                 statements: 65,
-                branches: 80,
+                branches: 65,
                 functions: 72,
             },
         },

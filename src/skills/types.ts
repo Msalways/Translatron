@@ -42,6 +42,8 @@ export interface LoadedSkill {
     examples: Array<{ keyPath: string; text: string }>;
     /** sha256 over normalized content + sorted resources. */
     fingerprint: string;
+    /** Organization guidance sorts before repo-local guidance. */
+    priority?: number;
     /** Domain selector (scope `domain` only). */
     selector?: DomainSelector;
 }

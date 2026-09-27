@@ -4,7 +4,8 @@ import { resolve } from 'node:path';
 import chalk from 'chalk';
 import ora from 'ora';
 import { loadConfig } from '../../config/loader.js';
-import { GenericJsonAdapter } from '../../catalogs/generic-json.js';
+import { configuredCatalogAdapter } from '../../catalogs/configured.js';
+import type { NormalizedCatalog } from '../../catalogs/adapter.js';
 import { AtomicFileWriter } from '../../file-writer/index.js';
 import { V2LedgerReader } from '../../migration/v2-ledger.js';
 import { applyMigration, dryRunMigration, type MigrateInput } from '../../migration/migrate.js';
@@ -34,10 +35,16 @@ export const migrateCommand = new Command('migrate')
             }
 
             spinner.text = 'Reading source catalog...';
-            const adapter = new GenericJsonAdapter();
-            const pattern = config.extractors[0]?.pattern ?? './locales/en.json';
-            const sourceFiles = await adapter.discover(pattern);
-            const sourceCatalogs = await adapter.read(sourceFiles, { locale: config.sourceLanguage });
+            const { adapter } = await configuredCatalogAdapter(config.extractors);
+            const sourceCatalogs: NormalizedCatalog[] = [];
+            for (const extractor of config.extractors) {
+                const sourceFiles = await adapter.discover(extractor.pattern, extractor.exclude);
+                sourceCatalogs.push(...await adapter.read(sourceFiles, {
+                    locale: config.sourceLanguage,
+                    ...(extractor.keyPrefix !== undefined ? { keyPrefix: extractor.keyPrefix } : {}),
+                    ...(extractor.exclude !== undefined ? { exclude: extractor.exclude } : {}),
+                }));
+            }
             const sourceUnits = sourceCatalogs.flatMap((c) => c.units);
             spinner.succeed(`Source: ${sourceUnits.length} keys (${config.sourceLanguage})`);
 

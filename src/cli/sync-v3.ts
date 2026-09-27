@@ -18,6 +18,7 @@ import { detectConflicts } from '../cli/conflicts.js';
 import { scopedKey } from '../core/reconciler.js';
 import { ProgressRenderer } from './renderer/progress.js';
 import { buildRunReport } from './renderer/json.js';
+import { configuredCatalogAdapter } from '../catalogs/configured.js';
 
 export interface V3SyncFlags {
     force?: boolean;
@@ -93,7 +94,7 @@ function isDryRunResult(result: unknown): result is { runId: string; plannedTran
     );
 }
 
-/** `sync --v3` handler. Exits: 0 complete/partial_success, 3 failed. */
+/** Default v3 sync handler. Exit 3 means any locale remains incomplete. */
 export async function runV3Sync(flags: V3SyncFlags): Promise<void> {
     if (flags.json !== true) {
         console.log(chalk.blue('Syncing translations (v3 engine)...\n'));
@@ -105,7 +106,8 @@ export async function runV3Sync(flags: V3SyncFlags): Promise<void> {
     }
     const config = toLegacyConfig(raw, normalized);
     const state = await loadProjectState(config);
-    const input = assembleEngineInput(state, normalized, flags, new DeepAgentRuntime());
+    const { adapter } = await configuredCatalogAdapter(config.extractors);
+    const input = { ...assembleEngineInput(state, normalized, flags, new DeepAgentRuntime()), adapter };
     const result = await runSyncEngine(input);
 
     if (isDryRunResult(result)) {
@@ -122,7 +124,7 @@ export async function runV3Sync(flags: V3SyncFlags): Promise<void> {
 
     if (flags.json === true) {
         console.log(JSON.stringify(buildRunReport(result.runId, result.summaries), null, 2));
-        process.exit(result.status === 'failed' ? 3 : 0);
+        process.exit(result.status === 'complete' ? 0 : 3);
     }
     const renderer = new ProgressRenderer({
         write: (line: string) => console.log(line),
@@ -136,5 +138,5 @@ export async function runV3Sync(flags: V3SyncFlags): Promise<void> {
     if (result.skipped.needsReview > 0) skippedParts.push(`needs review: ${result.skipped.needsReview}`);
     if (result.skipped.preserved > 0) skippedParts.push(`preserved: ${result.skipped.preserved}`);
     if (skippedParts.length > 0) console.log(chalk.gray(`  Skipped (${skippedParts.join(', ')})\n`));
-    process.exit(result.status === 'failed' ? 3 : 0);
+    process.exit(result.status === 'complete' ? 0 : 3);
 }

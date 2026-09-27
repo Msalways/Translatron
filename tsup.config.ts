@@ -13,7 +13,7 @@ export default defineConfig({
     splitting: false,
     treeshake: true,
     outDir: 'dist',
-    target: 'node18',
+    target: 'node22',
     platform: 'node',
     shims: true,
 });

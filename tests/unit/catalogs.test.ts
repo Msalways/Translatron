@@ -4,11 +4,34 @@ import { tmpdir } from 'node:os';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { GenericJsonAdapter } from '../../src/catalogs/generic-json.js';
+import { configuredCatalogAdapter } from '../../src/catalogs/configured.js';
+import { SourceUnitSchema } from '../../src/core/domain.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const FIXTURE = join(__dirname, '..', 'fixtures', 'catalogs', 'nested.en-GB.json');
 
 describe('catalogs: GenericJsonAdapter (A2-T002)', () => {
+    it('uses JSON as the built-in adapter and rejects unsupported extractor types clearly', async () => {
+        const configured = await configuredCatalogAdapter([{ type: 'json', pattern: FIXTURE }]);
+        expect(configured.adapter).toBeInstanceOf(GenericJsonAdapter);
+        await expect(configuredCatalogAdapter([{ type: 'typescript', pattern: './src/**/*.ts' }])).rejects.toThrow(/not supported by a built-in catalog adapter/);
+    });
+
+    it('loads a custom adapter that discovers, reads, validates, and writes catalogs', async () => {
+        const module = join(__dirname, '..', 'fixtures', 'catalog-adapter.mjs');
+        const { adapter, extractors } = await configuredCatalogAdapter([{ type: 'custom', module, pattern: 'fixture.catalog' }]);
+        const [file] = await adapter.discover(extractors[0].pattern);
+        const [catalog] = await adapter.read([file], { locale: 'fr-FR' });
+        expect(catalog.units.map((unit) => SourceUnitSchema.parse(unit).keyPath)).toEqual(['message']);
+        const output = join(mkdtempSync(join(tmpdir(), 'trn-custom-')), 'fr.catalog');
+        try {
+            await adapter.write(output, { message: 'Bonjour' });
+            expect(JSON.parse(await (await import('node:fs/promises')).readFile(output, 'utf-8'))).toEqual({ message: 'Bonjour' });
+        } finally {
+            rmSync(dirname(output), { recursive: true, force: true });
+        }
+    });
+
     it('reads nested JSON into flat units with hashes + placeholders', async () => {
         const adapter = new GenericJsonAdapter();
         const [catalog] = await adapter.read([FIXTURE], { locale: 'en-GB' });

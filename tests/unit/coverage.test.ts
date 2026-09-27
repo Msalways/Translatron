@@ -3,7 +3,7 @@ import { findTargetOnlyKeys } from '../../src/core/coverage.js';
 import { runCheck, formatCheckReport } from '../../src/cli/commands/check.js';
 import { reconcile } from '../../src/core/reconciler.js';
 import { safeValidateConfig } from '../../src/config/schema.js';
-import type { SourceUnit } from '../../src/core/domain.js';
+import type { SourceUnit, TranslationRevision } from '../../src/core/domain.js';
 import { computeHash } from '../../src/utils/hash.js';
 
 function unit(keyPath: string, sourceText = 'text'): SourceUnit {
@@ -209,5 +209,36 @@ describe('coverage: catalogs.targetOnly config (K-T004)', () => {
         if (parsed.success) {
             expect(parsed.data.catalogs).toBeUndefined();
         }
+    });
+});
+
+describe('coverage: registry-backed stale check', () => {
+    it('reports source, skill, and context staleness; catalogs-only skips them', () => {
+        const sources: SourceUnit[] = [
+            unit('source', 'New source'),
+            unit('skill', 'Skill guided'),
+            { ...unit('context'), context: 'Current context' },
+        ];
+        const locale = 'fr-FR';
+        const texts: Record<string, string> = { source: 'Traduction', skill: 'Texte', context: 'Texte' };
+        const targets = [{ locale, entries: texts }];
+        const revision = (keyPath: string, sourceHash: string, extra: Partial<TranslationRevision> = {}): TranslationRevision => ({
+            catalogId: 'main', keyPath, sourceLocale: 'en-GB', targetLocale: locale,
+            id: `rev-${keyPath}`, sourceHash, targetHash: computeHash(texts[keyPath]),
+            origin: 'agent', parentIds: [], skillFingerprints: [], runId: 'run-1',
+            createdAt: '2026-01-01T00:00:00.000Z', ...extra,
+        });
+        const revisions = [
+            revision('source', computeHash('Old source')),
+            revision('skill', computeHash('Skill guided'), { skillFingerprints: [{ id: 'org:policy:global', scope: 'global', fingerprint: 'old-fingerprint' }] }),
+            revision('context', computeHash('text'), {
+                skillFingerprints: [{ id: 'org:policy:global', scope: 'global', fingerprint: 'new-fingerprint' }],
+                contextFingerprint: computeHash('Old context'),
+            }),
+        ];
+        const currentSkills = new Map([[locale, new Map([['org:policy:global', 'new-fingerprint']])]]);
+        const result = runCheck({ sourceLocale: 'en-GB', sourceUnits: sources, targets, revisions, currentSkills });
+        expect(result.issues.map((issue) => issue.kind)).toEqual(['source-stale', 'skill-stale', 'context-stale']);
+        expect(runCheck({ sourceLocale: 'en-GB', sourceUnits: sources, targets, revisions, currentSkills, catalogsOnly: true }).issues).toEqual([]);
     });
 });

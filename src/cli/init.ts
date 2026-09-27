@@ -32,6 +32,7 @@ export function buildV3Scaffold(providerId: LangChainProviderId = 'openai'): Sca
 export default defineConfig({
     sourceLocale: 'en-GB',
     locales: ['fr-FR', 'de-DE'],
+    extractors: [{ type: 'json', pattern: './locales/en-GB.json' }],
     providers: [
         {
             name: '${providerId}',
@@ -39,7 +40,7 @@ export default defineConfig({
             model: '${provider.defaultModel}',${providerFields}
         },
     ],
-    skills: { paths: ['./translatron/skills'] },
+    skills: { dir: './translatron/skills' },
     execution: { maxLanguages: 4, maxGlobalModelCalls: 8 },
 });
 `;

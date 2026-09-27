@@ -20,6 +20,7 @@ describe('init scaffolds (D-T004)', () => {
         expect(scaffold.content).toContain('baseUrl: process.env.OPENAI_BASE_URL');
         expect(scaffold.content).toContain('sourceLocale: \'en-GB\'');
         expect(scaffold.content).toContain('locales: [\'fr-FR\', \'de-DE\']');
+        expect(scaffold.content).toContain("extractors: [{ type: 'json', pattern: './locales/en-GB.json' }]");
     });
 
     it('v3 scaffold provider form normalizes without warnings', () => {

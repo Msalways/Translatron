@@ -60,10 +60,10 @@ export function resolveSkillsForUnit(skills: LoadedSkill[], input: ResolveInput)
             domain.push(skill);
         }
     }
-    global.sort(byId);
+    global.sort(byPriorityThenId);
     // Bare language before region (`ja` before `ja-JP`), then id.
-    language.sort((a, b) => specificity(a) - specificity(b) || byId(a, b));
-    domain.sort(byId);
+    language.sort((a, b) => specificity(a) - specificity(b) || byPriorityThenId(a, b));
+    domain.sort(byPriorityThenId);
     return [...global, ...language, ...domain];
 }
 
@@ -82,6 +82,10 @@ function byId(a: LoadedSkill, b: LoadedSkill): number {
     return a.id < b.id ? -1 : a.id > b.id ? 1 : 0;
 }
 
+function byPriorityThenId(a: LoadedSkill, b: LoadedSkill): number {
+    return (a.priority ?? 0) - (b.priority ?? 0) || byId(a, b);
+}
+
 /** Specificity of the best-matching locale affinity (fewer segments = less specific). */
 function specificity(skill: LoadedSkill): number {
     if (skill.locales.length === 0) return 0;
@@ -97,13 +101,13 @@ function specificity(skill: LoadedSkill): number {
 export function skillsForLocale(skills: LoadedSkill[], locale: string): LoadedSkill[] {
     const global = skills
         .filter((skill) => skill.scope === 'global' && matchesLocale(skill.locales, locale))
-        .sort(byId);
+        .sort(byPriorityThenId);
     const language = skills
         .filter((skill) => skill.scope === 'language' && matchesLocale(skill.locales, locale))
-        .sort((a, b) => specificity(a) - specificity(b) || byId(a, b));
+        .sort((a, b) => specificity(a) - specificity(b) || byPriorityThenId(a, b));
     const domain = skills
         .filter((skill) => skill.scope === 'domain' && matchesLocale(skill.selector?.locales ?? skill.locales, locale))
-        .sort(byId);
+        .sort(byPriorityThenId);
     return [...global, ...language, ...domain];
 }
 

@@ -88,6 +88,7 @@ export function deriveState(args: {
     currentTargetHash: string | undefined;
     revisions: TranslationRevision[];
     currentSkills: Map<string, string>;
+    skillsAvailable?: boolean;
     currentContextFingerprint: string | undefined;
     isFailed: boolean;
     isConflict: boolean;
@@ -98,6 +99,7 @@ export function deriveState(args: {
         currentTargetHash,
         revisions,
         currentSkills,
+        skillsAvailable = currentSkills.size > 0,
         currentContextFingerprint,
         isFailed,
         isConflict,
@@ -132,25 +134,16 @@ export function deriveState(args: {
     if (sourceUnit.sourceHash !== baseline.sourceHash) return 'SOURCE_STALE';
 
     // Skill change since the baseline was produced.
-    if (currentSkills.size > 0) {
+    if (skillsAvailable) {
         const applied = baseline.skillFingerprints ?? [];
         const appliedById = new Map(applied.map((s) => [s.id, s.fingerprint]));
-        let stale = applied.length === 0;
-        if (!stale) {
-            for (const [id, fingerprint] of currentSkills) {
-                if (appliedById.get(id) !== fingerprint) {
-                    stale = true;
-                    break;
-                }
-            }
+        if (appliedById.size !== currentSkills.size || [...currentSkills].some(([id, fingerprint]) => appliedById.get(id) !== fingerprint)) {
+            return 'SKILL_STALE';
         }
-        if (stale) return 'SKILL_STALE';
     }
 
     // Context change since the baseline was produced.
-    if (currentContextFingerprint !== undefined) {
-        if (baseline.contextFingerprint !== currentContextFingerprint) return 'CONTEXT_STALE';
-    }
+    if (baseline.contextFingerprint !== currentContextFingerprint) return 'CONTEXT_STALE';
 
     return 'CLEAN';
 }
@@ -205,6 +198,7 @@ export function reconcile(input: ReconcileInput): ReconcileResult {
                 currentTargetHash: entry?.targetHash,
                 revisions,
                 currentSkills,
+                skillsAvailable: input.currentSkills !== undefined,
                 currentContextFingerprint: input.contextFingerprints?.get(unit.unitId),
                 isFailed: input.failedKeys?.has(scope) ?? false,
                 isConflict: input.conflictKeys?.has(scope) ?? false,

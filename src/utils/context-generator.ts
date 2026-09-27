@@ -203,6 +203,6 @@ export class ContextGenerator {
      * Type guard to check if value is ContextMetadata
      */
     private static isContextMetadata(value: any): value is ContextMetadata {
-        return value && typeof value === 'object' && 'value' in value;
+        return value && typeof value === 'object' && typeof value.value === 'string';
     }
 }

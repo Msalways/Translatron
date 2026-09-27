@@ -17,6 +17,7 @@ export interface NormalizedV3Config {
     providers: ProviderConfig[];
     skillsDir: string;
     skillPaths: string[];
+    skillPackage?: { name: string; version: string };
     limits: ExecutionLimits;
     maxUnitsPerBatch: number;
     warnings: string[];
@@ -61,7 +62,9 @@ export function normalizeConfig(raw: unknown): NormalizedV3Config {
     const warnings: string[] = [];
     const shape = (raw ?? {}) as Record<string, unknown>;
 
-    const sourceLocale = typeof shape['sourceLanguage'] === 'string' ? (shape['sourceLanguage'] as string) : 'en-GB';
+    const sourceLocale = typeof shape['sourceLocale'] === 'string'
+        ? shape['sourceLocale']
+        : typeof shape['sourceLanguage'] === 'string' ? shape['sourceLanguage'] : 'en-GB';
 
     // Target languages: v3 `locales: string[]` or legacy `targetLanguages`.
     let targetLanguages: TargetLanguage[];
@@ -104,10 +107,16 @@ export function normalizeConfig(raw: unknown): NormalizedV3Config {
     // Skills: object form, v3 `skills.paths` shorthand, or defaults.
     let skillsDir = './translatron/skills';
     let skillPaths: string[] = [];
-    const skillsRaw = shape['skills'] as { dir?: unknown; paths?: unknown } | undefined;
+    let skillPackage: { name: string; version: string } | undefined;
+    const skillsRaw = shape['skills'] as { dir?: unknown; paths?: unknown; package?: unknown } | undefined;
     if (skillsRaw !== undefined && skillsRaw !== null && typeof skillsRaw === 'object') {
         if (typeof skillsRaw.dir === 'string') skillsDir = skillsRaw.dir;
         if (Array.isArray(skillsRaw.paths)) skillPaths = (skillsRaw.paths as unknown[]).filter((p): p is string => typeof p === 'string');
+        if (skillsRaw.package !== undefined && skillsRaw.package !== null && typeof skillsRaw.package === 'object') {
+            const candidate = skillsRaw.package as Record<string, unknown>;
+            if (typeof candidate.name !== 'string' || typeof candidate.version !== 'string') throw new Error('Invalid skills.package: exact name and version are required.');
+            skillPackage = { name: candidate.name, version: candidate.version };
+        }
     }
 
     // Execution limits: per-key merge over DEFAULT_EXECUTION_LIMITS (R&D 8).
@@ -143,7 +152,7 @@ export function normalizeConfig(raw: unknown): NormalizedV3Config {
         if (!knownTopLevel.has(key)) warnings.push(`Unknown config key "${key}" ignored.`);
     }
 
-    return { sourceLocale, targetLanguages, providers, skillsDir, skillPaths, limits, maxUnitsPerBatch, warnings };
+    return { sourceLocale, targetLanguages, providers, skillsDir, skillPaths, ...(skillPackage !== undefined ? { skillPackage } : {}), limits, maxUnitsPerBatch, warnings };
 }
 
 function providerFromModel(model: string): ProviderConfig {
@@ -176,7 +185,7 @@ export function toLegacyConfig(raw: unknown, normalized: NormalizedV3Config): tr
         ...(rawRec['output'] !== undefined ? { output: rawRec['output'] } : {}),
         ...(rawRec['prompts'] !== undefined ? { prompts: rawRec['prompts'] } : {}),
         ...(rawRec['advanced'] !== undefined ? { advanced: rawRec['advanced'] } : {}),
-        skills: { dir: normalized.skillsDir, paths: normalized.skillPaths },
+        skills: { dir: normalized.skillsDir, paths: normalized.skillPaths, ...(normalized.skillPackage !== undefined ? { package: normalized.skillPackage } : {}) },
         ...(rawRec['registry'] !== undefined ? { registry: rawRec['registry'] } : {}),
         ...(rawRec['catalogs'] !== undefined ? { catalogs: rawRec['catalogs'] } : {}),
         ...(rawRec['policies'] !== undefined ? { policies: rawRec['policies'] } : {}),

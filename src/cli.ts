@@ -35,7 +35,7 @@ program
     .option('-f, --force', 'Force regeneration of manual overrides')
     .option('-v, --verbose', 'Enable verbose output with streaming')
     .option('--json', 'Machine-readable report (R&D §31 schema)')
-    .option('--v2', 'Use the legacy v2 sync engine (compatibility mode)')
+    .option('--v2', 'Legacy v2 compatibility path (deprecated; migrate to v3)')
     .option('--dry-run', 'Plan only; change nothing (v3 only)')
     .option('--affected-by-skill <id>', 'Only retranslate skill-stale units (v3 only)')
     .action(async (options) => {
@@ -81,7 +81,7 @@ program
 program
     .command('init')
     .description('Initialize translatronx configuration')
-    .option('--v2', 'Scaffold the legacy v2 TypeScript template')
+    .option('--v2', 'Scaffold a legacy v2 config (deprecated; use v3 defaults)')
     .option('--provider <id>', 'v3 provider profile (default: openai)')
     .action(async (options: { v2?: boolean; provider?: string }) => {
         try {
@@ -187,8 +187,9 @@ program
 program
     .command('check')
     .description('Validate target files without making changes (deterministic, CI-safe)')
-    .option('--catalogs-only', 'Skip registry-dependent sections (none exist yet; file gate only)')
-    .action(async (options: { catalogsOnly?: boolean }) => {
+    .option('--catalogs-only', 'Check catalog files only; skip registry-dependent stale checks')
+    .option('--json', 'Write the check report as JSON')
+    .action(async (options: { catalogsOnly?: boolean; json?: boolean }) => {
         try {
             const state = await loadProjectState();
             const targets = state.targets.map((snapshot) => ({
@@ -202,9 +203,15 @@ program
                 sourceUnits: state.sourceUnits,
                 targets,
                 targetOnly: state.config.catalogs?.targetOnly ?? [],
+                ...(!options.catalogsOnly && state.registryReadable ? { revisions: state.revisions } : {}),
+                ...(!options.catalogsOnly ? { currentSkills: new Map(state.config.targetLanguages.map((language) => [language.shortCode, currentSkillMap(state.skills, language.shortCode)])) } : {}),
                 ...(options.catalogsOnly === true ? { catalogsOnly: true as const } : {}),
             });
             const locales = state.config.targetLanguages.map((language) => language.shortCode);
+            if (options.json === true) {
+                console.log(JSON.stringify(result, null, 2));
+                process.exit(result.failed ? CHECK_EXIT_ISSUES : 0);
+            }
             if (result.failed) {
                 console.log(chalk.red(formatCheckReport(result, locales)));
                 process.exit(CHECK_EXIT_ISSUES);

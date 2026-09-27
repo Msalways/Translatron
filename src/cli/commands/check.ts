@@ -12,11 +12,14 @@ import { findTargetOnlyKeys } from '../../core/coverage.js';
 import { containsIcu, validateIcu } from '../../validation/icu.js';
 import { extractTagNames, validateMarkup } from '../../validation/markup.js';
 import { validatePlaceholders } from '../../validation/placeholders.js';
+import { deriveState } from '../../core/reconciler.js';
+import type { TranslationRevision } from '../../core/domain.js';
+import { computeHash } from '../../utils/hash.js';
 
 export const CHECK_EXIT_CLEAN = 0;
 export const CHECK_EXIT_ISSUES = 1;
 
-export type CheckIssueKind = 'missing' | 'empty' | 'placeholder' | 'icu' | 'markup' | 'orphan';
+export type CheckIssueKind = 'missing' | 'empty' | 'placeholder' | 'icu' | 'markup' | 'orphan' | 'source-stale' | 'skill-stale' | 'context-stale';
 
 export type OrphanSeverity = 'error' | 'warn';
 
@@ -35,12 +38,11 @@ export interface CheckInput {
     targetOnly?: string[];
     /** Orphan severity; default `error`. Config knob deferred to config-v3. */
     orphanSeverity?: OrphanSeverity;
-    /**
-     * Forward-compat gate: when registry-dependent check sections land, this
-     * flag skips them (§19). No such sections exist yet — output is identical
-     * either way (pinned by test).
-     */
+    /** Skip provenance-dependent stale checks while retaining catalog checks. */
     catalogsOnly?: boolean;
+    /** Registry state enables provenance-dependent stale checks. */
+    revisions?: TranslationRevision[];
+    currentSkills?: Map<string, Map<string, string>>;
 }
 
 export interface CheckResult {
@@ -58,12 +60,37 @@ export function runCheck(input: CheckInput): CheckResult {
     const warnings: CheckIssue[] = [];
     const locales = input.targets.map((target) => target.locale).sort();
     const entriesByLocale = new Map(input.targets.map((target) => [target.locale, target.entries]));
+    const revisionsByIdentity = new Map<string, TranslationRevision[]>();
+    for (const revision of input.revisions ?? []) {
+        if (revision.catalogId !== 'main' || revision.sourceLocale !== input.sourceLocale) continue;
+        const identity = `${revision.targetLocale}\0${revision.keyPath}`;
+        const list = revisionsByIdentity.get(identity) ?? [];
+        list.push(revision);
+        revisionsByIdentity.set(identity, list);
+    }
     for (const unit of input.sourceUnits) {
         for (const locale of locales) {
             const text = entriesByLocale.get(locale)?.[unit.keyPath];
+            const revisions = revisionsByIdentity.get(`${locale}\0${unit.keyPath}`) ?? [];
             if (text === undefined) {
                 issues.push({ keyPath: unit.keyPath, locale, kind: 'missing', message: 'MISSING' });
                 continue;
+            }
+            if (!input.catalogsOnly && revisions.length > 0) {
+                const state = deriveState({
+                    identity: { catalogId: 'main', keyPath: unit.keyPath, sourceLocale: input.sourceLocale, targetLocale: locale },
+                    sourceUnit: unit,
+                    currentTargetHash: computeHash(text),
+                    revisions,
+                    currentSkills: input.currentSkills?.get(locale) ?? new Map(),
+                    skillsAvailable: input.currentSkills !== undefined,
+                    currentContextFingerprint: unit.context === undefined ? undefined : computeHash(unit.context),
+                    isFailed: false,
+                    isConflict: false,
+                    needsReview: false,
+                });
+                const staleKind = state === 'SOURCE_STALE' ? 'source-stale' : state === 'SKILL_STALE' ? 'skill-stale' : state === 'CONTEXT_STALE' ? 'context-stale' : undefined;
+                if (staleKind !== undefined) issues.push({ keyPath: unit.keyPath, locale, kind: staleKind, message: state });
             }
             if (text.trim() === '' && unit.sourceText.trim() !== '') {
                 issues.push({ keyPath: unit.keyPath, locale, kind: 'empty', message: 'empty translation' });
@@ -85,8 +112,7 @@ export function runCheck(input: CheckInput): CheckResult {
         }
     }
     // Orphaned target keys: present in targets, absent from source, unexcepted.
-    // `catalogsOnly` currently changes nothing (no registry sections exist
-    // yet); the flag is pinned by test for when they land.
+    // Catalog checks run regardless of this flag; only stale-state checks above are skipped.
     void input.catalogsOnly;
     const orphans = findTargetOnlyKeys({
         sourceUnits: input.sourceUnits,

@@ -43,6 +43,10 @@ describe('config-v3: normal form (C-T001)', () => {
         const normalized = normalizeConfig({ locales: ['fr-FR'], skills: { dir: './mine/skills' } });
         expect(normalized.skillsDir).toBe('./mine/skills');
     });
+
+    it('uses the configured v3 source locale', () => {
+        expect(normalizeConfig({ sourceLocale: 'en-US', locales: ['fr-FR'] }).sourceLocale).toBe('en-US');
+    });
 });
 
 describe('config-v3: legacy passthrough + conflicts (C-T001)', () => {
@@ -98,11 +102,11 @@ describe('config-v3: loadConfig fallback (review)', () => {
         try {
             writeFileSync(
                 join(dir, 'translatronx.config.json'),
-                JSON.stringify({ sourceLocale: 'en-GB', locales: ['fr-FR'], model: 'groq:llama-x' }),
+                JSON.stringify({ sourceLocale: 'en-US', locales: ['fr-FR'], model: 'groq:llama-x' }),
                 'utf-8'
             );
             const config = await loadConfig(dir);
-            expect(config.sourceLanguage).toBe('en-GB');
+            expect(config.sourceLanguage).toBe('en-US');
             expect(config.targetLanguages).toEqual([{ language: 'French', shortCode: 'fr-FR' }]);
             expect(config.providers).toMatchObject([{ name: 'default', type: 'groq', model: 'llama-x' }]);
         } finally {

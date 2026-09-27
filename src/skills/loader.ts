@@ -37,7 +37,7 @@ export function parseFrontmatter(docPath: string, raw: string): { frontmatter: S
     const block = raw.substring(3, end);
     const body = raw.substring(end + 4).replace(/^\r?\n/, '');
     let currentListKey: 'locales' | 'keys' | null = null;
-    for (const [lineNumber, line] of block.split('\n').map((line, index) => [index + 1, line] as const)) {
+    for (const [lineNumber, line] of block.replace(/\r/g, '').split('\n').map((line, index) => [index + 1, line] as const)) {
         if (line.trim() === '' || line.trim().startsWith('#')) continue;
         const listItem = line.match(/^\s*-\s+(.+)$/);
         if (listItem !== null) {
@@ -237,7 +237,7 @@ export async function discoverSkills(skillsDir: string): Promise<DiscoveredSkill
     if (!existsSync(skillsDir)) return { skills: [], warnings };
     // fast-glob requires forward slashes, even on Windows.
     const pattern = `${resolve(skillsDir).replace(/\\/g, '/')}/**/SKILL.md`;
-    const docPaths = (await fg([pattern], { absolute: true, onlyFiles: true })).sort();
+    const docPaths = (await fg([pattern], { absolute: true, onlyFiles: true, ignore: ['**/node_modules/**', '**/dist/**'] })).sort();
     const skills = docPaths.map((docPath) => {
         const scope = inferScopeFromPath(skillsDir, docPath);
         const fallbackId = basename(dirname(docPath));

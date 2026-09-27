@@ -1,5 +1,7 @@
 # Migrating to Translatronx from Existing Translation System
 
+> **Current workflow:** Translatron v3 is the default. For a Translatron v2 project, run `translatronx migrate` to review the migration, then `translatronx migrate --apply` to import available ledger history into `.translatron/`. This preserves locale catalogs and keeps the v2 SQLite ledger as a backup. The scenarios below describe legacy `import`/ledger workflows and config shapes; use the [v3 workflow](README.md#v3-engine-default) for new or ongoing projects.
+
 This guide helps you integrate Translatronx into an existing project that already has translations.
 
 ## Scenario 1: You Have Existing Translations

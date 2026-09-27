@@ -53,6 +53,7 @@ import {
 } from '../skills/index.js';
 import { toAppliedSkills } from '../skills/types.js';
 import { GenericJsonAdapter } from '../catalogs/generic-json.js';
+import type { CatalogAdapter } from '../catalogs/adapter.js';
 import { ensureRegistryHome } from '../registry/bootstrap.js';
 import { writeSegment } from '../registry/writer.js';
 import {
@@ -109,7 +110,7 @@ export interface EngineInput {
     createdAt?: string;
     maxUnitsPerBatch?: number;
     maxRepairAttempts?: number;
-    adapter?: GenericJsonAdapter;
+    adapter?: CatalogAdapter;
 }
 
 export interface EngineRunResult {
@@ -536,10 +537,12 @@ export async function runSyncEngine(input: EngineInput): Promise<EngineRunResult
 
     // --- 5. Staged write per locale (translations + removals, one cycle) ---
     for (const staged of stagedWrites) {
-        await adapter.applyChanges(staged.filePath, {
-            set: staged.set,
-            ...(staged.remove.length > 0 ? { remove: staged.remove } : {}),
-        });
+        if (adapter.applyChanges !== undefined) {
+            await adapter.applyChanges(staged.filePath, { set: staged.set, ...(staged.remove.length > 0 ? { remove: staged.remove } : {}) });
+        } else {
+            if (staged.remove.length > 0) throw new Error(`Configured catalog adapter cannot remove orphan keys in ${staged.filePath}; implement applyChanges().`);
+            await adapter.write(staged.filePath, staged.set);
+        }
         filesUpdated.push(staged.filePath);
         emit({ kind: 'catalog-written', locale: staged.locale, file: staged.filePath });
     }

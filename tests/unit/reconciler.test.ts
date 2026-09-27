@@ -245,6 +245,20 @@ describe('reconciler: 12-state matrix (A2-T005)', () => {
         ).toBe('CONTEXT_STALE');
     });
 
+    it('CONTEXT_STALE when previously applied context is removed', () => {
+        expect(deriveState({
+            identity: identity('a', 'fr-FR'),
+            sourceUnit: unit('a'),
+            currentTargetHash: 'tgt-v1',
+            revisions: [rev('a', 'fr-FR', { contextFingerprint: 'ctx-old' })],
+            currentSkills: new Map(),
+            currentContextFingerprint: undefined,
+            isFailed: false,
+            isConflict: false,
+            needsReview: false,
+        })).toBe('CONTEXT_STALE');
+    });
+
     it('ORPHANED — source key removed', () => {
         expect(
             deriveState({

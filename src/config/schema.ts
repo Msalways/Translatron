@@ -62,6 +62,8 @@ export type ProviderConfig = z.infer<typeof ProviderConfigSchema>;
 export const ExtractorConfigSchema = z.object({
     type: z.enum(['json', 'typescript', 'custom']),
     pattern: z.string().or(z.array(z.string())),
+    /** For custom extractors, a module exporting a CatalogAdapter as default or `adapter`. */
+    module: z.string().optional(),
     keyPrefix: z.string().optional(),
     exclude: z.array(z.string()).optional(),
     // Context file configuration
@@ -160,6 +162,7 @@ export type TargetLanguage = z.infer<typeof TargetLanguageSchema>;
 export const SkillsConfigSchema = z.object({
     dir: z.string().default('./translatron/skills'),
     paths: z.array(z.string()).default([]),
+    package: z.object({ name: z.string().min(1), version: z.string().min(1) }).optional(),
 }).default({ dir: './translatron/skills', paths: [] });
 
 export type SkillsConfig = z.infer<typeof SkillsConfigSchema>;
@@ -194,7 +197,7 @@ export interface TranslatronV3Config {
     sourceLocale?: string;
     locales?: string[];
     model?: string;
-    skills?: { dir?: string; paths?: string[] };
+    skills?: { dir?: string; paths?: string[]; package?: { name: string; version: string } };
     execution?: {
         maxLanguages?: number;
         maxBatchesPerLanguage?: number;

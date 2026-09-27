@@ -45,4 +45,6 @@ export interface CatalogAdapter {
      * (read → deep merge → temp file → rename).
      */
     write(filePath: string, translations: Record<string, string>, options?: CatalogWriteOptions): Promise<void>;
+    /** Optional single staged merge/removal operation used by the v3 engine. */
+    applyChanges?(filePath: string, changes: { set?: Record<string, string>; remove?: string[] }, options?: CatalogWriteOptions): Promise<void>;
 }
